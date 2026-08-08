@@ -33,7 +33,7 @@ import {
   subscribeToCategories,
   saveCategoriesToFirestore,
 } from './utils/firestoreStorage';
-import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, Settings } from 'lucide-react';
+import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft } from 'lucide-react';
 
 export const App: React.FC = () => {
   // Auth state
@@ -442,23 +442,11 @@ export const App: React.FC = () => {
           </button>
 
           {activeView === 'grid' && (
-            <>
-              <button
-                type="button"
-                className="btn-categories-trigger"
-                onClick={() => setIsGridSettingsModalOpen(true)}
-                title="Configure grid hours & row spacing"
-              >
-                <Settings className="icon-xs" />
-                <span>Hours & Spacing</span>
-              </button>
-
-              <WeekSelector
-                currentWeekInfo={currentWeekInfo}
-                selectedDate={selectedDate}
-                onDateChange={setSelectedDate}
-              />
-            </>
+            <WeekSelector
+              currentWeekInfo={currentWeekInfo}
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+            />
           )}
         </div>
       </header>
@@ -498,6 +486,7 @@ export const App: React.FC = () => {
               onDropTask={handleDropTask}
               onEditTask={handleOpenEditModal}
               onResizeTask={handleResizeTask}
+              onOpenGridSettings={() => setIsGridSettingsModalOpen(true)}
             />
           </main>
         </div>

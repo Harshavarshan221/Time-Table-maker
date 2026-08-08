@@ -618,7 +618,27 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   flex-shrink: 0;
+}
+
+.time-header-cell.clickable {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.time-header-cell.clickable:hover {
+  background-color: var(--primary-light);
+}
+
+.time-header-cell.clickable:hover .time-zone-label,
+.time-header-cell.clickable:hover .time-settings-icon {
+  color: var(--primary);
+}
+
+.time-settings-icon {
+  color: var(--text-muted);
+  transition: color 0.15s ease;
 }
 
 .time-zone-label {
@@ -696,6 +716,20 @@ body {
   justify-content: center;
   align-items: flex-start;
   padding-top: 4px;
+}
+
+.time-slot-label.clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.time-slot-label.clickable:hover {
+  background-color: var(--primary-light);
+}
+
+.time-slot-label.clickable:hover .time-text {
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .time-text {

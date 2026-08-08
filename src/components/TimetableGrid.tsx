@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { WeekInfo, Task, CategoryConfig } from '../types/timetable';
 import { minutesToTime, pxToSnappedTime } from '../utils/dateUtils';
 import { TaskCard } from './TaskCard';
+import { Settings } from 'lucide-react';
 
 interface TimetableGridProps {
   currentWeekInfo: WeekInfo;
@@ -19,6 +20,7 @@ interface TimetableGridProps {
   ) => void;
   onEditTask: (task: Task) => void;
   onResizeTask: (taskId: string, newDurationMinutes: number) => void;
+  onOpenGridSettings?: () => void;
 }
 
 export const TimetableGrid: React.FC<TimetableGridProps> = ({
@@ -31,6 +33,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   onDropTask,
   onEditTask,
   onResizeTask,
+  onOpenGridSettings,
 }) => {
   // Drag over drop indicator state
   const [dragOverInfo, setDragOverInfo] = useState<{
@@ -86,8 +89,13 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
     <div className="timetable-grid-wrapper">
       {/* Header row with Day names */}
       <div className="grid-header-row">
-        <div className="time-header-cell">
+        <div
+          className="time-header-cell clickable"
+          onClick={onOpenGridSettings}
+          title="Click to configure grid hours & row spacing"
+        >
           <span className="time-zone-label">TIME</span>
+          <Settings className="icon-nano time-settings-icon" />
         </div>
         <div className="days-header-cells">
           {currentWeekInfo.days.map((day) => (
@@ -112,7 +120,9 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
             return (
               <div 
                 key={hour} 
-                className="time-slot-label"
+                className="time-slot-label clickable"
+                onClick={onOpenGridSettings}
+                title="Click to configure grid hours & row spacing"
                 style={{ height: `${hourHeightPx}px` }}
               >
                 <span className="time-text">{timeStr}</span>
