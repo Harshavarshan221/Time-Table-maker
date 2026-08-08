@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, GripVertical, Trash2, Clock } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Clock, PanelLeftClose } from 'lucide-react';
 import type { Task, CategoryConfig } from '../types/timetable';
 import { getCategoryConfig } from '../constants/categories';
 import { formatDurationLabel } from '../utils/dateUtils';
@@ -10,6 +10,7 @@ interface UnscheduledTasksProps {
   onAddTaskClick: () => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask: (task: Task) => void;
+  onToggleSidebar?: () => void;
 }
 
 export const UnscheduledTasks: React.FC<UnscheduledTasksProps> = ({
@@ -18,6 +19,7 @@ export const UnscheduledTasks: React.FC<UnscheduledTasksProps> = ({
   onAddTaskClick,
   onDeleteTask,
   onEditTask,
+  onToggleSidebar,
 }) => {
   const handleDragStart = (e: React.DragEvent, task: Task) => {
     e.dataTransfer.setData('application/json', JSON.stringify({
@@ -35,14 +37,25 @@ export const UnscheduledTasks: React.FC<UnscheduledTasksProps> = ({
           <h2 className="sidebar-title">TASKS</h2>
           <span className="task-count-badge">{tasks.length}</span>
         </div>
-        <button
-          onClick={onAddTaskClick}
-          className="btn-add-task"
-          title="Create a new task"
-        >
-          <Plus className="icon-sm" />
-          <span>Add Task</span>
-        </button>
+        <div className="sidebar-header-right">
+          <button
+            onClick={onAddTaskClick}
+            className="btn-add-task"
+            title="Create a new unscheduled task"
+          >
+            <Plus className="icon-xs" />
+            <span>Add Task</span>
+          </button>
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className="btn-sidebar-close-icon"
+              title="Close Task Bar"
+            >
+              <PanelLeftClose className="icon-sm" />
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="sidebar-hint">

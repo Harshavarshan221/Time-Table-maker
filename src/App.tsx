@@ -33,7 +33,7 @@ import {
   subscribeToCategories,
   saveCategoriesToFirestore,
 } from './utils/firestoreStorage';
-import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeftClose, PanelLeft, Settings } from 'lucide-react';
+import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, Settings } from 'lucide-react';
 
 export const App: React.FC = () => {
   // Auth state
@@ -453,19 +453,6 @@ export const App: React.FC = () => {
                 <span>Hours & Spacing</span>
               </button>
 
-              <button
-                type="button"
-                className={`btn-sidebar-toggle ${!isSidebarOpen ? 'collapsed' : ''}`}
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                title={isSidebarOpen ? 'Hide Tasks Sidebar' : 'Show Tasks Sidebar'}
-              >
-                {isSidebarOpen ? (
-                  <PanelLeftClose className="icon-sm" />
-                ) : (
-                  <PanelLeft className="icon-sm" />
-                )}
-              </button>
-
               <WeekSelector
                 currentWeekInfo={currentWeekInfo}
                 selectedDate={selectedDate}
@@ -479,14 +466,25 @@ export const App: React.FC = () => {
       {/* Main Content View */}
       {activeView === 'grid' && (
         <div className={`main-layout ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
-          {isSidebarOpen && (
+          {isSidebarOpen ? (
             <UnscheduledTasks
               tasks={unscheduledTasks}
               categories={categories}
               onAddTaskClick={handleOpenCreateModal}
               onDeleteTask={handleDeleteTask}
               onEditTask={handleOpenEditModal}
+              onToggleSidebar={() => setIsSidebarOpen(false)}
             />
+          ) : (
+            <button
+              type="button"
+              className="btn-expand-tasks-floating"
+              onClick={() => setIsSidebarOpen(true)}
+              title="Show Tasks Sidebar"
+            >
+              <PanelLeft className="icon-sm" />
+              <span>Show Tasks ({unscheduledTasks.length})</span>
+            </button>
           )}
 
           <main className="timetable-main">
