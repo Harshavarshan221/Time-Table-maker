@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus, GripVertical, Trash2, Clock } from 'lucide-react';
 import type { Task, CategoryConfig } from '../types/timetable';
 import { getCategoryConfig } from '../constants/categories';
+import { formatDurationLabel } from '../utils/dateUtils';
 
 interface UnscheduledTasksProps {
   tasks: Task[];
@@ -86,9 +87,7 @@ export const UnscheduledTasks: React.FC<UnscheduledTasksProps> = ({
                     </span>
                     <span className="duration-pill">
                       <Clock className="icon-nano" />
-                      {task.durationMinutes >= 60
-                        ? `${task.durationMinutes / 60}h${task.durationMinutes % 60 ? ` ${task.durationMinutes % 60}m` : ''}`
-                        : `${task.durationMinutes}m`}
+                      {formatDurationLabel(task.durationMinutes)}
                     </span>
                   </div>
 

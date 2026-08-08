@@ -7,6 +7,8 @@ import { timeToTopPx, durationToHeightPx, formatTimeRange, snapDuration } from '
 interface TaskCardProps {
   task: Task;
   categories: CategoryConfig[];
+  startHour?: number;
+  hourHeightPx?: number;
   onEditTask: (task: Task) => void;
   onResizeTask: (taskId: string, newDurationMinutes: number) => void;
 }
@@ -14,6 +16,8 @@ interface TaskCardProps {
 export const TaskCard: React.FC<TaskCardProps> = ({
   task,
   categories,
+  startHour = 8,
+  hourHeightPx = HOUR_HEIGHT_PX,
   onEditTask,
   onResizeTask,
 }) => {
@@ -23,8 +27,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const catConfig = getCategoryConfig(categories, task.category);
   const currentDuration = resizePreviewDuration ?? task.durationMinutes;
 
-  const topPx = timeToTopPx(task.startTime || '08:00');
-  const heightPx = durationToHeightPx(currentDuration);
+  const topPx = timeToTopPx(task.startTime || '08:00', startHour, hourHeightPx);
+  const heightPx = durationToHeightPx(currentDuration, hourHeightPx);
 
   // Drag start for moving task around the grid
   const handleDragStart = (e: React.DragEvent) => {
@@ -54,7 +58,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaY = moveEvent.clientY - startY;
-      const deltaMinutes = (deltaY / HOUR_HEIGHT_PX) * 60;
+      const deltaMinutes = (deltaY / hourHeightPx) * 60;
       const rawNewDuration = initialDuration + deltaMinutes;
       const snapped = snapDuration(rawNewDuration);
       setResizePreviewDuration(snapped);

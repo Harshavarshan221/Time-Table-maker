@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import type { WeekInfo, Task, CategoryConfig } from '../types/timetable';
-import { START_HOUR, TOTAL_HOURS, HOUR_HEIGHT_PX } from '../constants/categories';
 import { minutesToTime, pxToSnappedTime } from '../utils/dateUtils';
 import { TaskCard } from './TaskCard';
 
@@ -8,6 +7,9 @@ interface TimetableGridProps {
   currentWeekInfo: WeekInfo;
   scheduledTasks: Task[];
   categories: CategoryConfig[];
+  startHour?: number;
+  endHour?: number;
+  hourHeightPx?: number;
   onDropTask: (
     taskId: string,
     dayIndex: number,
@@ -23,6 +25,9 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   currentWeekInfo,
   scheduledTasks,
   categories,
+  startHour = 8,
+  endHour = 22,
+  hourHeightPx = 64,
   onDropTask,
   onEditTask,
   onResizeTask,
@@ -33,8 +38,10 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
     startTime: string;
   } | null>(null);
 
-  // Hours array [8, 9, 10, ..., 22]
-  const hours = Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => START_HOUR + i);
+  const totalHours = endHour - startHour;
+
+  // Hours array [startHour, ..., endHour]
+  const hours = Array.from({ length: totalHours + 1 }, (_, i) => startHour + i);
 
   const handleDragOver = (e: React.DragEvent, dayIndex: number) => {
     e.preventDefault();
@@ -42,7 +49,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
 
     const rect = e.currentTarget.getBoundingClientRect();
     const yPx = e.clientY - rect.top;
-    const snappedStart = pxToSnappedTime(yPx);
+    const snappedStart = pxToSnappedTime(yPx, startHour, endHour, hourHeightPx);
 
     setDragOverInfo({
       dayIndex,
@@ -60,7 +67,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
 
     const rect = e.currentTarget.getBoundingClientRect();
     const yPx = e.clientY - rect.top;
-    const snappedStart = pxToSnappedTime(yPx);
+    const snappedStart = pxToSnappedTime(yPx, startHour, endHour, hourHeightPx);
 
     try {
       const rawPayload = e.dataTransfer.getData('application/json');
@@ -106,10 +113,10 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
               <div 
                 key={hour} 
                 className="time-slot-label"
-                style={{ height: `${HOUR_HEIGHT_PX}px` }}
+                style={{ height: `${hourHeightPx}px` }}
               >
                 <span className="time-text">{timeStr}</span>
-                {idx < TOTAL_HOURS && <div className="half-hour-line" />}
+                {idx < totalHours && <div className="half-hour-line" />}
               </div>
             );
           })}
@@ -124,7 +131,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
 
             const isHovered = dragOverInfo?.dayIndex === day.dayIndex;
             const dropHighlightTop = isHovered
-              ? ( ( ( (parseInt(dragOverInfo.startTime.split(':')[0]) * 60 + parseInt(dragOverInfo.startTime.split(':')[1])) - (START_HOUR * 60) ) / 60) * HOUR_HEIGHT_PX )
+              ? ( ( ( (parseInt(dragOverInfo.startTime.split(':')[0]) * 60 + parseInt(dragOverInfo.startTime.split(':')[1])) - (startHour * 60) ) / 60) * hourHeightPx )
               : 0;
 
             return (
@@ -134,14 +141,14 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                 onDragOver={(e) => handleDragOver(e, day.dayIndex)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, day.dayIndex)}
-                style={{ height: `${TOTAL_HOURS * HOUR_HEIGHT_PX}px` }}
+                style={{ height: `${totalHours * hourHeightPx}px` }}
               >
                 {/* Background Hour & Half-Hour Grid lines */}
                 {hours.map((hour) => (
                   <div
                     key={hour}
                     className="grid-hour-cell"
-                    style={{ height: `${HOUR_HEIGHT_PX}px` }}
+                    style={{ height: `${hourHeightPx}px` }}
                   >
                     <div className="grid-half-line" />
                   </div>
@@ -153,7 +160,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                     className="drop-target-preview"
                     style={{
                       top: `${dropHighlightTop}px`,
-                      height: `${HOUR_HEIGHT_PX}px`, // 1 hour preview height
+                      height: `${hourHeightPx}px`, // 1 hour preview height
                     }}
                   >
                     <span className="drop-preview-time">{dragOverInfo.startTime}</span>
@@ -166,6 +173,8 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                     key={task.id}
                     task={task}
                     categories={categories}
+                    startHour={startHour}
+                    hourHeightPx={hourHeightPx}
                     onEditTask={onEditTask}
                     onResizeTask={onResizeTask}
                   />

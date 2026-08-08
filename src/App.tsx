@@ -8,6 +8,8 @@ import { TimetableGrid } from './components/TimetableGrid';
 import { TaskModal } from './components/TaskModal';
 import { CategoryManagerModal } from './components/CategoryManagerModal';
 import { AuthModal } from './components/AuthModal';
+import { GridSettingsModal } from './components/GridSettingsModal';
+import type { GridSettings } from './components/GridSettingsModal';
 import { ViewSwitcher } from './components/ViewSwitcher';
 import type { AppView } from './components/ViewSwitcher';
 import { AnalyticsView } from './components/AnalyticsView';
@@ -31,15 +33,33 @@ import {
   subscribeToCategories,
   saveCategoriesToFirestore,
 } from './utils/firestoreStorage';
-import { Calendar, Palette, LogIn, LogOut, CloudCheck } from 'lucide-react';
+import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeftClose, PanelLeft, Settings } from 'lucide-react';
 
 export const App: React.FC = () => {
   // Auth state
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // View mode
+  // View mode & Sidebar toggle state
   const [activeView, setActiveView] = useState<AppView>('grid');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Grid Settings state (hours & spacing)
+  const [gridSettings, setGridSettings] = useState<GridSettings>(() => {
+    try {
+      const saved = localStorage.getItem('timetable_grid_settings');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return { startHour: 8, endHour: 22, hourHeightPx: 64 };
+  });
+  const [isGridSettingsModalOpen, setIsGridSettingsModalOpen] = useState(false);
+
+  const handleSaveGridSettings = (newSettings: GridSettings) => {
+    setGridSettings(newSettings);
+    try {
+      localStorage.setItem('timetable_grid_settings', JSON.stringify(newSettings));
+    } catch {}
+  };
 
   // Date and Week state
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -422,31 +442,61 @@ export const App: React.FC = () => {
           </button>
 
           {activeView === 'grid' && (
-            <WeekSelector
-              currentWeekInfo={currentWeekInfo}
-              selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
-            />
+            <>
+              <button
+                type="button"
+                className="btn-categories-trigger"
+                onClick={() => setIsGridSettingsModalOpen(true)}
+                title="Configure grid hours & row spacing"
+              >
+                <Settings className="icon-xs" />
+                <span>Hours & Spacing</span>
+              </button>
+
+              <button
+                type="button"
+                className={`btn-sidebar-toggle ${!isSidebarOpen ? 'collapsed' : ''}`}
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                title={isSidebarOpen ? 'Hide Tasks Sidebar' : 'Show Tasks Sidebar'}
+              >
+                {isSidebarOpen ? (
+                  <PanelLeftClose className="icon-sm" />
+                ) : (
+                  <PanelLeft className="icon-sm" />
+                )}
+              </button>
+
+              <WeekSelector
+                currentWeekInfo={currentWeekInfo}
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+              />
+            </>
           )}
         </div>
       </header>
 
       {/* Main Content View */}
       {activeView === 'grid' && (
-        <div className="main-layout">
-          <UnscheduledTasks
-            tasks={unscheduledTasks}
-            categories={categories}
-            onAddTaskClick={handleOpenCreateModal}
-            onDeleteTask={handleDeleteTask}
-            onEditTask={handleOpenEditModal}
-          />
+        <div className={`main-layout ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
+          {isSidebarOpen && (
+            <UnscheduledTasks
+              tasks={unscheduledTasks}
+              categories={categories}
+              onAddTaskClick={handleOpenCreateModal}
+              onDeleteTask={handleDeleteTask}
+              onEditTask={handleOpenEditModal}
+            />
+          )}
 
           <main className="timetable-main">
             <TimetableGrid
               currentWeekInfo={currentWeekInfo}
               scheduledTasks={weekScheduledTasks}
               categories={categories}
+              startHour={gridSettings.startHour}
+              endHour={gridSettings.endHour}
+              hourHeightPx={gridSettings.hourHeightPx}
               onDropTask={handleDropTask}
               onEditTask={handleOpenEditModal}
               onResizeTask={handleResizeTask}
@@ -486,6 +536,14 @@ export const App: React.FC = () => {
         onClose={() => setIsCategoryManagerOpen(false)}
         categories={categories}
         onSaveCategories={handleSaveCategories}
+      />
+
+      {/* Grid Settings Modal */}
+      <GridSettingsModal
+        isOpen={isGridSettingsModalOpen}
+        onClose={() => setIsGridSettingsModalOpen(false)}
+        settings={gridSettings}
+        onSaveSettings={handleSaveGridSettings}
       />
 
       {/* Auth Modal */}

@@ -141,6 +141,35 @@ body {
   color: var(--primary);
 }
 
+.btn-sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-sidebar-toggle:hover {
+  background-color: var(--primary-light);
+  border-color: #93C5FD;
+  color: var(--primary);
+}
+
+.btn-sidebar-toggle.collapsed {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border-color: #93C5FD;
+}
+
+.grid-settings-modal {
+  max-width: 440px;
+}
+
 /* ==========================================================================
    VIEW SWITCHER TABS
    ========================================================================== */

@@ -116,39 +116,63 @@ export function formatTimeRange(startTimeStr: string, durationMinutes: number): 
 }
 
 /**
+ * Format duration in minutes into a clean human-readable label e.g., 90 -> "1h 30m", 120 -> "2h", 45 -> "45m".
+ */
+export function formatDurationLabel(durationMinutes: number): string {
+  const hrs = Math.floor(durationMinutes / 60);
+  const mins = durationMinutes % 60;
+  if (hrs > 0 && mins > 0) {
+    return `${hrs}h ${mins}m`;
+  }
+  if (hrs > 0) {
+    return `${hrs}h`;
+  }
+  return `${mins}m`;
+}
+
+/**
  * Convert time string to pixel offset from top of grid.
  */
-export function timeToTopPx(startTimeStr: string): number {
+export function timeToTopPx(
+  startTimeStr: string,
+  startHour: number = START_HOUR,
+  hourHeightPx: number = HOUR_HEIGHT_PX
+): number {
   const startMins = timeToMinutes(startTimeStr);
-  const gridStartMins = START_HOUR * 60;
+  const gridStartMins = startHour * 60;
   const offsetMins = startMins - gridStartMins;
-  return (offsetMins / 60) * HOUR_HEIGHT_PX;
+  return (offsetMins / 60) * hourHeightPx;
 }
 
 /**
  * Convert duration in minutes to pixel height.
  */
-export function durationToHeightPx(durationMinutes: number): number {
-  return (durationMinutes / 60) * HOUR_HEIGHT_PX;
+export function durationToHeightPx(
+  durationMinutes: number,
+  hourHeightPx: number = HOUR_HEIGHT_PX
+): number {
+  return (durationMinutes / 60) * hourHeightPx;
 }
 
 /**
  * Convert pixel Y offset on the grid to snapped time string "HH:mm" (snapped to 30 min).
  */
-export function pxToSnappedTime(yPx: number): string {
-  const hoursFromStart = yPx / HOUR_HEIGHT_PX;
-  const totalMinutes = START_HOUR * 60 + hoursFromStart * 60;
+export function pxToSnappedTime(
+  yPx: number,
+  startHour: number = START_HOUR,
+  endHour: number = 22,
+  hourHeightPx: number = HOUR_HEIGHT_PX
+): string {
+  const hoursFromStart = yPx / hourHeightPx;
+  const totalMinutes = startHour * 60 + hoursFromStart * 60;
   // Snap to nearest 30 mins
   const snappedMinutes = Math.max(
-    START_HOUR * 60,
-    Math.min(22 * 60, Math.round(totalMinutes / 30) * 30)
+    startHour * 60,
+    Math.min(endHour * 60, Math.round(totalMinutes / 30) * 30)
   );
   return minutesToTime(snappedMinutes);
 }
 
-/**
- * Snap raw duration in minutes to 30-minute interval (minimum 30 mins).
- */
 /**
  * Snap raw duration in minutes to 30-minute interval (minimum 30 mins).
  */
