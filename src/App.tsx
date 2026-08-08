@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import type { User } from 'firebase/auth';
+import { auth } from './firebase';
 import { WeekSelector } from './components/WeekSelector';
 import { UnscheduledTasks } from './components/UnscheduledTasks';
 import { TimetableGrid } from './components/TimetableGrid';
 import { TaskModal } from './components/TaskModal';
 import { CategoryManagerModal } from './components/CategoryManagerModal';
+import { AuthModal } from './components/AuthModal';
 import { ViewSwitcher } from './components/ViewSwitcher';
 import type { AppView } from './components/ViewSwitcher';
 import { AnalyticsView } from './components/AnalyticsView';
@@ -17,9 +21,23 @@ import {
   loadCategories,
   saveCategories,
 } from './utils/storage';
-import { Calendar, Palette } from 'lucide-react';
+import {
+  subscribeToWeekTasks,
+  saveScheduledTaskToFirestore,
+  deleteScheduledTaskFromFirestore,
+  subscribeToUnscheduledTasks,
+  saveUnscheduledTaskToFirestore,
+  deleteUnscheduledTaskFromFirestore,
+  subscribeToCategories,
+  saveCategoriesToFirestore,
+} from './utils/firestoreStorage';
+import { Calendar, Palette, LogIn, LogOut, CloudCheck } from 'lucide-react';
 
 export const App: React.FC = () => {
+  // Auth state
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   // View mode
   const [activeView, setActiveView] = useState<AppView>('grid');
 
@@ -39,40 +57,97 @@ export const App: React.FC = () => {
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
-  // Load state from localStorage on mount
+  // Auth observer
   useEffect(() => {
-    setAllScheduledTasks(loadAllScheduledTasks());
-    setUnscheduledTasks(loadUnscheduledTasks());
-    setCategories(loadCategories());
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
   }, []);
+
+  // Initial local storage load fallback
+  useEffect(() => {
+    if (!currentUser) {
+      setAllScheduledTasks(loadAllScheduledTasks());
+      setUnscheduledTasks(loadUnscheduledTasks());
+      setCategories(loadCategories());
+    }
+  }, [currentUser]);
+
+  // Firestore Real-Time Subscriptions when User is Authenticated
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // 1. Subscribe to Current Week Tasks
+    const unsubWeek = subscribeToWeekTasks(
+      currentUser.uid,
+      currentWeekInfo.weekId,
+      (tasks) => {
+        setAllScheduledTasks((prev) => {
+          const otherWeeks = prev.filter((t) => t.weekId !== currentWeekInfo.weekId);
+          return [...otherWeeks, ...tasks];
+        });
+      }
+    );
+
+    // 2. Subscribe to Unscheduled Tasks
+    const unsubUnscheduled = subscribeToUnscheduledTasks(
+      currentUser.uid,
+      (tasks) => {
+        setUnscheduledTasks(tasks);
+      }
+    );
+
+    // 3. Subscribe to Custom Categories
+    const unsubCategories = subscribeToCategories(
+      currentUser.uid,
+      (cats) => {
+        if (cats.length > 0) setCategories(cats);
+      }
+    );
+
+    return () => {
+      unsubWeek();
+      unsubUnscheduled();
+      unsubCategories();
+    };
+  }, [currentUser, currentWeekInfo.weekId]);
 
   // Update currentWeekInfo whenever selectedDate changes
   useEffect(() => {
     setCurrentWeekInfo(getWeekInfo(selectedDate));
   }, [selectedDate]);
 
-  // Save changes to localStorage whenever task arrays or categories update
+  // Task Update helper (Optimistic UI + Firestore/LocalStorage Sync)
   const updateScheduledTasks = (newTasks: Task[]) => {
     setAllScheduledTasks(newTasks);
-    saveAllScheduledTasks(newTasks);
+    if (!currentUser) {
+      saveAllScheduledTasks(newTasks);
+    }
   };
 
   const updateUnscheduledTasks = (newTasks: Task[]) => {
     setUnscheduledTasks(newTasks);
-    saveUnscheduledTasks(newTasks);
+    if (!currentUser) {
+      saveUnscheduledTasks(newTasks);
+    }
   };
 
   const handleSaveCategories = (newCategories: CategoryConfig[]) => {
     setCategories(newCategories);
-    saveCategories(newCategories);
+    if (currentUser) {
+      saveCategoriesToFirestore(currentUser.uid, newCategories);
+    } else {
+      saveCategories(newCategories);
+    }
   };
 
-  // Scheduled tasks filtered specifically for the current visible week
+  // Scheduled tasks filtered for current week
   const weekScheduledTasks = allScheduledTasks.filter(
     (t) => t.weekId === currentWeekInfo.weekId
   );
 
-  // Handle Drag & Drop onto grid
+  // Drag & Drop onto grid
   const handleDropTask = (
     taskId: string,
     dayIndex: number,
@@ -95,15 +170,24 @@ export const App: React.FC = () => {
       };
 
       updateScheduledTasks([...allScheduledTasks, scheduledTask]);
+
+      if (currentUser) {
+        deleteUnscheduledTaskFromFirestore(currentUser.uid, taskId);
+        saveScheduledTaskToFirestore(currentUser.uid, scheduledTask);
+      }
     } else {
       const updated = allScheduledTasks.map((task) => {
         if (task.id === taskId) {
-          return {
+          const newTask = {
             ...task,
             weekId: currentWeekInfo.weekId,
             dayOfWeek: dayIndex,
             startTime,
           };
+          if (currentUser) {
+            saveScheduledTaskToFirestore(currentUser.uid, newTask);
+          }
+          return newTask;
         }
         return task;
       });
@@ -111,11 +195,15 @@ export const App: React.FC = () => {
     }
   };
 
-  // Handle resizing task duration on grid
+  // Resize duration on grid
   const handleResizeTask = (taskId: string, newDurationMinutes: number) => {
     const updated = allScheduledTasks.map((t) => {
       if (t.id === taskId) {
-        return { ...t, durationMinutes: newDurationMinutes };
+        const newTask = { ...t, durationMinutes: newDurationMinutes };
+        if (currentUser) {
+          saveScheduledTaskToFirestore(currentUser.uid, newTask);
+        }
+        return newTask;
       }
       return t;
     });
@@ -133,7 +221,7 @@ export const App: React.FC = () => {
       if (isCurrentlyScheduled) {
         const updatedScheduled = allScheduledTasks.map((t) => {
           if (t.id === taskId) {
-            return {
+            const updatedTask: Task = {
               ...t,
               title: taskData.title || t.title,
               category: taskData.category || t.category,
@@ -142,6 +230,10 @@ export const App: React.FC = () => {
               dayOfWeek: taskData.dayOfWeek !== undefined ? taskData.dayOfWeek : t.dayOfWeek,
               startTime: taskData.startTime !== undefined ? taskData.startTime : t.startTime,
             };
+            if (currentUser) {
+              saveScheduledTaskToFirestore(currentUser.uid, updatedTask);
+            }
+            return updatedTask;
           }
           return t;
         });
@@ -163,16 +255,25 @@ export const App: React.FC = () => {
             startTime: taskData.startTime,
           };
           updateScheduledTasks([...allScheduledTasks, newScheduledTask]);
+
+          if (currentUser) {
+            deleteUnscheduledTaskFromFirestore(currentUser.uid, taskId);
+            saveScheduledTaskToFirestore(currentUser.uid, newScheduledTask);
+          }
         } else {
           const updatedUnscheduled = unscheduledTasks.map((t) => {
             if (t.id === taskId) {
-              return {
+              const updatedTask: Task = {
                 ...t,
                 title: taskData.title || t.title,
                 category: taskData.category || t.category,
                 durationMinutes: taskData.durationMinutes || t.durationMinutes,
                 description: taskData.description,
               };
+              if (currentUser) {
+                saveUnscheduledTaskToFirestore(currentUser.uid, updatedTask);
+              }
+              return updatedTask;
             }
             return t;
           });
@@ -193,6 +294,9 @@ export const App: React.FC = () => {
           startTime: taskData.startTime,
         };
         updateScheduledTasks([...allScheduledTasks, newScheduled]);
+        if (currentUser) {
+          saveScheduledTaskToFirestore(currentUser.uid, newScheduled);
+        }
       } else {
         const newUnscheduled: Task = {
           id: newId,
@@ -202,6 +306,9 @@ export const App: React.FC = () => {
           description: taskData.description,
         };
         updateUnscheduledTasks([...unscheduledTasks, newUnscheduled]);
+        if (currentUser) {
+          saveUnscheduledTaskToFirestore(currentUser.uid, newUnscheduled);
+        }
       }
     }
   };
@@ -222,12 +329,25 @@ export const App: React.FC = () => {
       description: task.description,
     };
     updateUnscheduledTasks([...unscheduledTasks, unscheduledItem]);
+
+    if (currentUser && task.weekId) {
+      deleteScheduledTaskFromFirestore(currentUser.uid, task.weekId, taskId);
+      saveUnscheduledTaskToFirestore(currentUser.uid, unscheduledItem);
+    }
   };
 
   // Delete task
   const handleDeleteTask = (taskId: string) => {
+    const scheduledTask = allScheduledTasks.find((t) => t.id === taskId);
     updateScheduledTasks(allScheduledTasks.filter((t) => t.id !== taskId));
     updateUnscheduledTasks(unscheduledTasks.filter((t) => t.id !== taskId));
+
+    if (currentUser) {
+      if (scheduledTask && scheduledTask.weekId) {
+        deleteScheduledTaskFromFirestore(currentUser.uid, scheduledTask.weekId, taskId);
+      }
+      deleteUnscheduledTaskFromFirestore(currentUser.uid, taskId);
+    }
   };
 
   const handleOpenCreateModal = () => {
@@ -257,6 +377,40 @@ export const App: React.FC = () => {
         <ViewSwitcher activeView={activeView} onViewChange={setActiveView} />
 
         <div className="header-right-actions">
+          {/* User Auth Profile Badge or Sign In button */}
+          {currentUser ? (
+            <div className="user-profile-badge">
+              <div className="user-avatar">
+                {currentUser.photoURL ? (
+                  <img src={currentUser.photoURL} alt={currentUser.displayName || 'User'} />
+                ) : (
+                  <span>{(currentUser.displayName || currentUser.email || 'U')[0].toUpperCase()}</span>
+                )}
+              </div>
+              <div className="user-info-text">
+                <span className="user-name">{currentUser.displayName || currentUser.email?.split('@')[0]}</span>
+                <span className="cloud-status"><CloudCheck className="icon-nano" /> Cloud Synced</span>
+              </div>
+              <button
+                type="button"
+                className="btn-signout"
+                onClick={() => signOut(auth)}
+                title="Sign Out"
+              >
+                <LogOut className="icon-xs" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn-auth-signin"
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              <LogIn className="icon-xs" />
+              <span>Sign In / Sync</span>
+            </button>
+          )}
+
           <button
             type="button"
             className="btn-categories-trigger"
@@ -332,6 +486,12 @@ export const App: React.FC = () => {
         onClose={() => setIsCategoryManagerOpen(false)}
         categories={categories}
         onSaveCategories={handleSaveCategories}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
     </div>
   );
