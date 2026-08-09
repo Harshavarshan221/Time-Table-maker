@@ -136,15 +136,22 @@ export function formatDurationLabel(durationMinutes: number): string {
 }
 
 /**
- * Convert time string to pixel offset from top of grid.
+ * Convert time string to pixel offset from top of grid (handles overnight times after 12 AM midnight).
  */
 export function timeToTopPx(
   startTimeStr: string,
   startHour: number = START_HOUR,
   hourHeightPx: number = HOUR_HEIGHT_PX
 ): number {
-  const startMins = timeToMinutes(startTimeStr);
+  let startMins = timeToMinutes(startTimeStr);
   const gridStartMins = startHour * 60;
+
+  // Overnight adjustment: If startMins is less than gridStartMins (e.g. 01:00 AM vs 04:00 AM grid start),
+  // it means the task is scheduled after 12 AM midnight in the 24-hour cycle. Add 1440 mins (24h).
+  if (startMins < gridStartMins) {
+    startMins += 1440;
+  }
+
   const offsetMins = startMins - gridStartMins;
   return (offsetMins / 60) * hourHeightPx;
 }
