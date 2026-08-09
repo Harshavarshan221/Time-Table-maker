@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { WeekInfo, Task, CategoryConfig } from '../types/timetable';
-import { minutesToTime, pxToSnappedTime } from '../utils/dateUtils';
+import { minutesToFormattedTime, pxToSnappedTime } from '../utils/dateUtils';
 import { TaskCard } from './TaskCard';
 import { Settings } from 'lucide-react';
 
@@ -11,6 +11,7 @@ interface TimetableGridProps {
   startHour?: number;
   endHour?: number;
   hourHeightPx?: number;
+  timeFormat?: '12h' | '24h';
   onDropTask: (
     taskId: string,
     dayIndex: number,
@@ -27,9 +28,10 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   currentWeekInfo,
   scheduledTasks,
   categories,
-  startHour = 8,
-  endHour = 22,
+  startHour = 4,
+  endHour = 28,
   hourHeightPx = 64,
+  timeFormat = '12h',
   onDropTask,
   onEditTask,
   onResizeTask,
@@ -116,7 +118,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
         {/* Left Time Column */}
         <div className="time-column">
           {hours.map((hour, idx) => {
-            const timeStr = minutesToTime(hour * 60);
+            const timeStr = minutesToFormattedTime(hour * 60, timeFormat);
             return (
               <div 
                 key={hour} 

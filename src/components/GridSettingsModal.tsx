@@ -1,11 +1,12 @@
 import React from 'react';
-import { X, Settings, Clock, LayoutGrid } from 'lucide-react';
+import { X, Settings, Clock, LayoutGrid, ToggleLeft } from 'lucide-react';
 import { minutesToFormattedTime } from '../utils/dateUtils';
 
 export interface GridSettings {
   startHour: number;
   endHour: number;
   hourHeightPx: number;
+  timeFormat?: '12h' | '24h';
 }
 
 interface GridSettingsModalProps {
@@ -16,6 +17,10 @@ interface GridSettingsModalProps {
 }
 
 const START_HOUR_OPTIONS = [
+  { label: '12:00 AM Midnight (00:00)', value: 0 },
+  { label: '01:00 AM', value: 1 },
+  { label: '02:00 AM', value: 2 },
+  { label: '03:00 AM (Early Morning)', value: 3 },
   { label: '04:00 AM (Early Morning)', value: 4 },
   { label: '05:00 AM', value: 5 },
   { label: '06:00 AM', value: 6 },
@@ -23,7 +28,7 @@ const START_HOUR_OPTIONS = [
   { label: '08:00 AM (Default)', value: 8 },
   { label: '09:00 AM', value: 9 },
   { label: '10:00 AM', value: 10 },
-  { label: '12:00 AM Midnight (00:00)', value: 0 },
+  { label: '11:00 AM', value: 11 },
 ];
 
 const SPACING_OPTIONS = [
@@ -33,22 +38,22 @@ const SPACING_OPTIONS = [
   { label: 'Detailed (96px / hr)', value: 96 },
 ];
 
-function getEndHourOptions(startHour: number) {
+function getEndHourOptions(startHour: number, timeFormat: '12h' | '24h' = '12h') {
   const full24hValue = startHour + 24;
-  const commonEndValues = [20, 21, 22, 23, 24, 25, 26, 27, 28];
+  const commonEndValues = [18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36];
   const uniqueValues = new Set([...commonEndValues, full24hValue]);
 
   const sortedValues = Array.from(uniqueValues)
-    .filter((v) => v > startHour)
+    .filter((v) => v > startHour && v <= startHour + 24)
     .sort((a, b) => a - b);
 
   return sortedValues.map((val) => {
-    const formatted = minutesToFormattedTime(val * 60);
+    const formatted = minutesToFormattedTime(val * 60, timeFormat);
     const isFullCycle = val === full24hValue;
     const labelSuffix = isFullCycle
-      ? ' ⭐️ (Full 24-Hour Cycle - Upto Morning)'
+      ? ' ⭐️ (Default 24-Hour Full Cycle)'
       : val > 24
-      ? ' (Next Morning)'
+      ? ' (Next Day)'
       : '';
 
     return {
@@ -66,14 +71,16 @@ export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const endHourOptions = getEndHourOptions(settings.startHour);
+  const currentFormat = settings.timeFormat || '12h';
+  const endHourOptions = getEndHourOptions(settings.startHour, currentFormat);
 
+  // When Start Hour changes, AUTOMATICALLY default End Hour to 24 Hours later (same time next morning)
   const handleStartHourChange = (newStart: number) => {
-    const updatedEnd = settings.endHour <= newStart ? newStart + 24 : settings.endHour;
+    const default24hEnd = newStart + 24;
     onSaveSettings({
       ...settings,
       startHour: newStart,
-      endHour: updatedEnd,
+      endHour: default24hEnd,
     });
   };
 
@@ -90,11 +97,35 @@ export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({
         </div>
 
         <div className="modal-body">
+          {/* Time Display Format (12h vs 24h) */}
+          <div className="form-group">
+            <label className="form-label">
+              <ToggleLeft className="icon-xs text-primary" />
+              Time Display Format
+            </label>
+            <div className="time-format-toggle-group">
+              <button
+                type="button"
+                className={`btn-format-toggle ${currentFormat === '12h' ? 'active' : ''}`}
+                onClick={() => onSaveSettings({ ...settings, timeFormat: '12h' })}
+              >
+                12-Hour Format (AM / PM)
+              </button>
+              <button
+                type="button"
+                className={`btn-format-toggle ${currentFormat === '24h' ? 'active' : ''}`}
+                onClick={() => onSaveSettings({ ...settings, timeFormat: '24h' })}
+              >
+                24-Hour Format (00:00 - 24:00)
+              </button>
+            </div>
+          </div>
+
           {/* Start Hour */}
           <div className="form-group">
             <label className="form-label">
               <Clock className="icon-xs text-primary" />
-              Morning Start Time (Your Choice)
+              Morning Start Time (Any Hour Choice)
             </label>
             <select
               className="form-select"
@@ -107,13 +138,16 @@ export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({
                 </option>
               ))}
             </select>
+            <span className="form-hint-text">
+              ✨ Selecting a start time automatically defaults the timetable grid to cover a full 24-hour cycle.
+            </span>
           </div>
 
           {/* End Hour */}
           <div className="form-group">
             <label className="form-label">
               <Clock className="icon-xs text-primary" />
-              Grid End Time (Upto Morning or Your Choice)
+              Grid End Time (Defaults to 24 Hours / Custom)
             </label>
             <select
               className="form-select"

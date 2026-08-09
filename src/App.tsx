@@ -763,6 +763,7 @@ export const App: React.FC = () => {
               startHour={gridSettings.startHour}
               endHour={gridSettings.endHour}
               hourHeightPx={gridSettings.hourHeightPx}
+              timeFormat={gridSettings.timeFormat || '12h'}
               onDropTask={handleDropTask}
               onEditTask={handleOpenEditModal}
               onResizeTask={handleResizeTask}

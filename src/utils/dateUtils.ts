@@ -94,25 +94,30 @@ export function minutesToTime(totalMinutes: number): string {
 }
 
 /**
- * Format total minutes from midnight into 12-hour format e.g. "10:30 AM".
+ * Format total minutes from midnight into 12-hour (e.g. "10:30 AM") or 24-hour format (e.g. "10:30").
  */
-export function minutesToFormattedTime(totalMinutes: number): string {
+export function minutesToFormattedTime(totalMinutes: number, format: '12h' | '24h' = '12h'): string {
   let hrs = Math.floor(totalMinutes / 60) % 24;
   const mins = totalMinutes % 60;
+  const minsStr = mins === 0 ? '00' : String(mins).padStart(2, '0');
+
+  if (format === '24h') {
+    return `${String(hrs).padStart(2, '0')}:${minsStr}`;
+  }
+
   const period = hrs >= 12 ? 'PM' : 'AM';
   hrs = hrs % 12;
   if (hrs === 0) hrs = 12;
-  const minsStr = mins === 0 ? '00' : String(mins).padStart(2, '0');
   return `${hrs}:${minsStr} ${period}`;
 }
 
 /**
- * Compute range label, e.g., "10:00 AM – 12:00 PM".
+ * Compute range label, e.g., "10:00 AM – 12:00 PM" or "10:00 – 12:00".
  */
-export function formatTimeRange(startTimeStr: string, durationMinutes: number): string {
+export function formatTimeRange(startTimeStr: string, durationMinutes: number, format: '12h' | '24h' = '12h'): string {
   const startMins = timeToMinutes(startTimeStr);
   const endMins = startMins + durationMinutes;
-  return `${minutesToFormattedTime(startMins)} – ${minutesToFormattedTime(endMins)}`;
+  return `${minutesToFormattedTime(startMins, format)} – ${minutesToFormattedTime(endMins, format)}`;
 }
 
 /**
