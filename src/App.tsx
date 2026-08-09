@@ -77,16 +77,21 @@ export const App: React.FC = () => {
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
+  const [isAuthInitializing, setIsAuthInitializing] = useState(true);
+
   // Auth observer
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      setIsAuthInitializing(false);
     });
     return () => unsubscribe();
   }, []);
 
   // Tasks & Categories state initialization based on auth
   useEffect(() => {
+    if (isAuthInitializing) return;
+
     if (currentUser) {
       // Reset state for logged-in user so sample template tasks do NOT linger
       setAllScheduledTasks([]);
@@ -96,7 +101,7 @@ export const App: React.FC = () => {
       setUnscheduledTasks(loadUnscheduledTasks());
       setCategories(loadCategories());
     }
-  }, [currentUser]);
+  }, [currentUser, isAuthInitializing]);
 
   // Firestore Real-Time Subscriptions when User is Authenticated
   useEffect(() => {
@@ -360,27 +365,21 @@ export const App: React.FC = () => {
     }
   };
 
-  // Duplicate task
+  // Duplicate task -> Generates a brand new task in the TASKS sidebar section!
   const handleDuplicateTask = (task: Task) => {
     const newId = `task-${Date.now()}`;
     const duplicatedTask: Task = {
-      ...task,
       id: newId,
-      title: `${task.title} (Copy)`,
+      title: task.title,
+      category: task.category,
+      durationMinutes: task.durationMinutes,
+      description: task.description || '',
     };
 
-    if (task.weekId && task.dayOfWeek !== undefined && task.startTime !== undefined) {
-      const updated = [...allScheduledTasks, duplicatedTask];
-      updateScheduledTasks(updated);
-      if (currentUser) {
-        saveScheduledTaskToFirestore(currentUser.uid, duplicatedTask);
-      }
-    } else {
-      const updated = [...unscheduledTasks, duplicatedTask];
-      updateUnscheduledTasks(updated);
-      if (currentUser) {
-        saveUnscheduledTaskToFirestore(currentUser.uid, duplicatedTask);
-      }
+    const updated = [duplicatedTask, ...unscheduledTasks];
+    updateUnscheduledTasks(updated);
+    if (currentUser) {
+      saveUnscheduledTaskToFirestore(currentUser.uid, duplicatedTask);
     }
   };
 
