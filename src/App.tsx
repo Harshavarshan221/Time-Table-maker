@@ -39,7 +39,10 @@ import {
   subscribeToCategories,
   saveCategoriesToFirestore,
 } from './utils/firestoreStorage';
-import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft } from 'lucide-react';
+import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, History, RotateCcw, X } from 'lucide-react';
+import { TrashHistoryModal } from './components/TrashHistoryModal';
+import type { DeletedTaskRecord } from './components/TrashHistoryModal';
+import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 
 export const App: React.FC = () => {
   // Auth state
@@ -60,13 +63,6 @@ export const App: React.FC = () => {
   });
   const [isGridSettingsModalOpen, setIsGridSettingsModalOpen] = useState(false);
 
-  const handleSaveGridSettings = (newSettings: GridSettings) => {
-    setGridSettings(newSettings);
-    try {
-      localStorage.setItem('timetable_grid_settings', JSON.stringify(newSettings));
-    } catch {}
-  };
-
   // Date and Week state
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentWeekInfo, setCurrentWeekInfo] = useState<WeekInfo>(() =>
@@ -77,6 +73,28 @@ export const App: React.FC = () => {
   const [allScheduledTasks, setAllScheduledTasks] = useState<Task[]>([]);
   const [unscheduledTasks, setUnscheduledTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<CategoryConfig[]>([]);
+
+  // Trash & Delete History state
+  const [deletedTasksHistory, setDeletedTasksHistory] = useState<DeletedTaskRecord[]>(() => {
+    try {
+      const raw = localStorage.getItem('timetable_trash_history_v1');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
+  const [deletePromptTask, setDeletePromptTask] = useState<Task | null>(null);
+  const [toastNotification, setToastNotification] = useState<{ message: string; record?: DeletedTaskRecord } | null>(null);
+
+  // Save trash history to local storage
+  useEffect(() => {
+    try {
+      localStorage.setItem('timetable_trash_history_v1', JSON.stringify(deletedTasksHistory));
+    } catch (e) {
+      console.error('Failed to save trash history:', e);
+    }
+  }, [deletedTasksHistory]);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -190,8 +208,33 @@ export const App: React.FC = () => {
     }
   };
 
+  // Requirement 1 Fix: Safe Category Deletion (re-assigns tasks to 'Other')
   const handleSaveCategories = (newCategories: CategoryConfig[]) => {
+    const newCatNames = new Set(newCategories.map((c) => c.name));
+    
+    // Re-assign tasks whose category was deleted to 'Other'
+    const updatedScheduled = allScheduledTasks.map((t) => {
+      if (!newCatNames.has(t.category)) {
+        const updated = { ...t, category: 'Other' };
+        if (currentUser && t.weekId) saveScheduledTaskToFirestore(currentUser.uid, updated);
+        return updated;
+      }
+      return t;
+    });
+
+    const updatedUnscheduled = unscheduledTasks.map((t) => {
+      if (!newCatNames.has(t.category)) {
+        const updated = { ...t, category: 'Other' };
+        if (currentUser) saveUnscheduledTaskToFirestore(currentUser.uid, updated);
+        return updated;
+      }
+      return t;
+    });
+
+    updateScheduledTasks(updatedScheduled);
+    updateUnscheduledTasks(updatedUnscheduled);
     setCategories(newCategories);
+
     if (currentUser) {
       saveUserCategories(currentUser.uid, newCategories);
       saveCategoriesToFirestore(currentUser.uid, newCategories);
@@ -412,18 +455,100 @@ export const App: React.FC = () => {
     }
   };
 
-  // Delete task
+  // Requirement 2 Fix: Smart Task Deletion Prompt & Single/All options
   const handleDeleteTask = (taskId: string) => {
-    const scheduledTask = allScheduledTasks.find((t) => t.id === taskId);
-    updateScheduledTasks(allScheduledTasks.filter((t) => t.id !== taskId));
-    updateUnscheduledTasks(unscheduledTasks.filter((t) => t.id !== taskId));
+    const targetTask = allScheduledTasks.find((t) => t.id === taskId) || unscheduledTasks.find((t) => t.id === taskId);
+    if (!targetTask) return;
+
+    const matchCount =
+      allScheduledTasks.filter((t) => t.title.toLowerCase() === targetTask.title.toLowerCase()).length +
+      unscheduledTasks.filter((t) => t.title.toLowerCase() === targetTask.title.toLowerCase()).length;
+
+    if (matchCount > 1) {
+      setDeletePromptTask(targetTask);
+    } else {
+      executeDeleteSingleTask(targetTask);
+    }
+  };
+
+  // Execute single task deletion
+  const executeDeleteSingleTask = (task: Task) => {
+    updateScheduledTasks(allScheduledTasks.filter((t) => t.id !== task.id));
+    updateUnscheduledTasks(unscheduledTasks.filter((t) => t.id !== task.id));
 
     if (currentUser) {
-      if (scheduledTask && scheduledTask.weekId) {
-        deleteScheduledTaskFromFirestore(currentUser.uid, scheduledTask.weekId, taskId);
-      }
-      deleteUnscheduledTaskFromFirestore(currentUser.uid, taskId);
+      if (task.weekId) deleteScheduledTaskFromFirestore(currentUser.uid, task.weekId, task.id);
+      deleteUnscheduledTaskFromFirestore(currentUser.uid, task.id);
     }
+
+    // Save to Trash History
+    const record: DeletedTaskRecord = { task, deletedAt: Date.now() };
+    setDeletedTasksHistory((prev) => [record, ...prev]);
+    setToastNotification({ message: `Deleted "${task.title}"`, record });
+
+    setTimeout(() => {
+      setToastNotification((prev) => (prev?.record === record ? null : prev));
+    }, 8000);
+  };
+
+  // Execute delete all matching tasks across timetable
+  const executeDeleteAllMatchingTasks = (task: Task) => {
+    const matchingScheduled = allScheduledTasks.filter((t) => t.title.toLowerCase() === task.title.toLowerCase());
+    const matchingUnscheduled = unscheduledTasks.filter((t) => t.title.toLowerCase() === task.title.toLowerCase());
+    const allMatching = [...matchingScheduled, ...matchingUnscheduled];
+
+    updateScheduledTasks(allScheduledTasks.filter((t) => t.title.toLowerCase() !== task.title.toLowerCase()));
+    updateUnscheduledTasks(unscheduledTasks.filter((t) => t.title.toLowerCase() !== task.title.toLowerCase()));
+
+    if (currentUser) {
+      matchingScheduled.forEach((t) => t.weekId && deleteScheduledTaskFromFirestore(currentUser.uid, t.weekId, t.id));
+      matchingUnscheduled.forEach((t) => deleteUnscheduledTaskFromFirestore(currentUser.uid, t.id));
+    }
+
+    const records: DeletedTaskRecord[] = allMatching.map((t) => ({ task: t, deletedAt: Date.now() }));
+    setDeletedTasksHistory((prev) => [...records, ...prev]);
+    setToastNotification({ message: `Deleted ${allMatching.length} instances of "${task.title}"`, record: records[0] });
+
+    setTimeout(() => {
+      setToastNotification((prev) => (prev?.record === records[0] ? null : prev));
+    }, 8000);
+  };
+
+  // Requirement 3 Fix: Restore Task from Trash History
+  const handleRestoreTask = (record: DeletedTaskRecord) => {
+    const task = record.task;
+
+    if (task.weekId && task.dayOfWeek !== undefined && task.startTime !== undefined) {
+      updateScheduledTasks([...allScheduledTasks, task]);
+      if (currentUser) saveScheduledTaskToFirestore(currentUser.uid, task);
+    } else {
+      updateUnscheduledTasks([...unscheduledTasks, task]);
+      if (currentUser) saveUnscheduledTaskToFirestore(currentUser.uid, task);
+    }
+
+    setDeletedTasksHistory((prev) => prev.filter((r) => r !== record));
+    setToastNotification({ message: `Restored "${task.title}"` });
+  };
+
+  const handleRestoreAllTrash = () => {
+    deletedTasksHistory.forEach((record) => {
+      const task = record.task;
+      if (task.weekId && task.dayOfWeek !== undefined && task.startTime !== undefined) {
+        updateScheduledTasks([...allScheduledTasks, task]);
+        if (currentUser) saveScheduledTaskToFirestore(currentUser.uid, task);
+      } else {
+        updateUnscheduledTasks([...unscheduledTasks, task]);
+        if (currentUser) saveUnscheduledTaskToFirestore(currentUser.uid, task);
+      }
+    });
+    setDeletedTasksHistory([]);
+    setIsTrashModalOpen(false);
+    setToastNotification({ message: 'Restored all deleted tasks!' });
+  };
+
+  const handleClearTrash = () => {
+    setDeletedTasksHistory([]);
+    setIsTrashModalOpen(false);
   };
 
   const handleOpenCreateModal = () => {
@@ -498,6 +623,20 @@ export const App: React.FC = () => {
           >
             <Palette className="icon-xs" />
             <span>Categories</span>
+          </button>
+
+          {/* History & Trash Recovery Trigger */}
+          <button
+            type="button"
+            className="btn-trash-trigger"
+            onClick={() => setIsTrashModalOpen(true)}
+            title="View Trash History & Restore Tasks"
+          >
+            <History className="icon-xs" />
+            <span>Trash / History</span>
+            {deletedTasksHistory.length > 0 && (
+              <span className="trash-badge-count">{deletedTasksHistory.length}</span>
+            )}
           </button>
 
           {activeView === 'grid' && (
@@ -586,19 +725,72 @@ export const App: React.FC = () => {
         onSaveCategories={handleSaveCategories}
       />
 
+      {/* Auth Sign In Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+
       {/* Grid Settings Modal */}
       <GridSettingsModal
         isOpen={isGridSettingsModalOpen}
         onClose={() => setIsGridSettingsModalOpen(false)}
         settings={gridSettings}
-        onSaveSettings={handleSaveGridSettings}
+        onSaveSettings={setGridSettings}
       />
 
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+      {/* Trash History & Recovery Modal */}
+      <TrashHistoryModal
+        isOpen={isTrashModalOpen}
+        onClose={() => setIsTrashModalOpen(false)}
+        deletedTasks={deletedTasksHistory}
+        categories={categories}
+        onRestoreTask={handleRestoreTask}
+        onRestoreAll={handleRestoreAllTrash}
+        onClearTrash={handleClearTrash}
       />
+
+      {/* Smart Delete Confirmation Prompt Modal */}
+      <DeleteConfirmModal
+        isOpen={deletePromptTask !== null}
+        onClose={() => setDeletePromptTask(null)}
+        task={deletePromptTask}
+        matchCount={
+          deletePromptTask
+            ? allScheduledTasks.filter((t) => t.title.toLowerCase() === deletePromptTask.title.toLowerCase()).length +
+              unscheduledTasks.filter((t) => t.title.toLowerCase() === deletePromptTask.title.toLowerCase()).length
+            : 0
+        }
+        onConfirmSingle={() => deletePromptTask && executeDeleteSingleTask(deletePromptTask)}
+        onConfirmAll={() => deletePromptTask && executeDeleteAllMatchingTasks(deletePromptTask)}
+      />
+
+      {/* Floating Undo Toast Notification */}
+      {toastNotification && (
+        <div className="undo-toast-notification">
+          <span>{toastNotification.message}</span>
+          {toastNotification.record && (
+            <button
+              type="button"
+              className="btn-toast-undo"
+              onClick={() => {
+                handleRestoreTask(toastNotification.record!);
+                setToastNotification(null);
+              }}
+            >
+              <RotateCcw className="icon-nano" />
+              <span>Undo</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn-toast-close"
+            onClick={() => setToastNotification(null)}
+          >
+            <X className="icon-nano" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
