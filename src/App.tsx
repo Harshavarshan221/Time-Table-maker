@@ -194,14 +194,18 @@ export const App: React.FC = () => {
       }
     );
 
-    // 3. Subscribe to Custom Categories
+    // 3. Subscribe to Custom Categories (Non-destructive Map merge)
     const unsubCategories = subscribeToCategories(
       currentUser.uid,
       (cats) => {
-        if (cats.length > 0) {
-          setCategories(cats);
-          saveUserCategories(currentUser.uid, cats);
-        }
+        setCategories((prev) => {
+          const map = new Map<string, CategoryConfig>();
+          prev.forEach((c) => map.set(c.id, c));
+          cats.forEach((c) => map.set(c.id, c));
+          const merged = Array.from(map.values());
+          saveUserCategories(currentUser.uid, merged);
+          return merged;
+        });
       }
     );
 
