@@ -356,6 +356,20 @@ body {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.timetable-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #FFFFFF;
+  overflow: auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
 }
 
 .tasks-sidebar {
@@ -616,44 +630,6 @@ body {
 /* ==========================================================================
    TIMETABLE GRID
    ========================================================================== */
-.timetable-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background-color: #FFFFFF;
-  overflow: hidden;
-}
-
-.scheduled-category-pill {
-  font-size: 0.86rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.scheduled-time-pill {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.card-drag-icon {
-  color: var(--text-muted);
-}
-
-.scheduled-card-title {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .timetable-grid-wrapper {
   background-color: #FFFFFF;
   border-radius: var(--radius-lg);
@@ -661,7 +637,9 @@ body {
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  min-width: 850px;
+  min-width: 680px;
+  width: 100%;
+  flex: 1;
 }
 
 .grid-header-row {
