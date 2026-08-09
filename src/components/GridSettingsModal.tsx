@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Settings, Clock, LayoutGrid } from 'lucide-react';
+import { minutesToFormattedTime } from '../utils/dateUtils';
 
 export interface GridSettings {
   startHour: number;
@@ -15,20 +16,14 @@ interface GridSettingsModalProps {
 }
 
 const START_HOUR_OPTIONS = [
+  { label: '04:00 AM (Early Morning)', value: 4 },
   { label: '05:00 AM', value: 5 },
   { label: '06:00 AM', value: 6 },
   { label: '07:00 AM', value: 7 },
   { label: '08:00 AM (Default)', value: 8 },
   { label: '09:00 AM', value: 9 },
   { label: '10:00 AM', value: 10 },
-];
-
-const END_HOUR_OPTIONS = [
-  { label: '08:00 PM (20:00)', value: 20 },
-  { label: '09:00 PM (21:00)', value: 21 },
-  { label: '10:00 PM (Default)', value: 22 },
-  { label: '11:00 PM (23:00)', value: 23 },
-  { label: '12:00 AM Midnight (24:00)', value: 24 },
+  { label: '12:00 AM Midnight (00:00)', value: 0 },
 ];
 
 const SPACING_OPTIONS = [
@@ -38,6 +33,31 @@ const SPACING_OPTIONS = [
   { label: 'Detailed (96px / hr)', value: 96 },
 ];
 
+function getEndHourOptions(startHour: number) {
+  const full24hValue = startHour + 24;
+  const commonEndValues = [20, 21, 22, 23, 24, 25, 26, 27, 28];
+  const uniqueValues = new Set([...commonEndValues, full24hValue]);
+
+  const sortedValues = Array.from(uniqueValues)
+    .filter((v) => v > startHour)
+    .sort((a, b) => a - b);
+
+  return sortedValues.map((val) => {
+    const formatted = minutesToFormattedTime(val * 60);
+    const isFullCycle = val === full24hValue;
+    const labelSuffix = isFullCycle
+      ? ' ⭐️ (Full 24-Hour Cycle - Upto Morning)'
+      : val > 24
+      ? ' (Next Morning)'
+      : '';
+
+    return {
+      label: `${formatted}${labelSuffix}`,
+      value: val,
+    };
+  });
+}
+
 export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({
   isOpen,
   onClose,
@@ -45,6 +65,17 @@ export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({
   onSaveSettings,
 }) => {
   if (!isOpen) return null;
+
+  const endHourOptions = getEndHourOptions(settings.startHour);
+
+  const handleStartHourChange = (newStart: number) => {
+    const updatedEnd = settings.endHour <= newStart ? newStart + 24 : settings.endHour;
+    onSaveSettings({
+      ...settings,
+      startHour: newStart,
+      endHour: updatedEnd,
+    });
+  };
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -62,18 +93,13 @@ export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({
           {/* Start Hour */}
           <div className="form-group">
             <label className="form-label">
-              <Clock className="icon-xs" />
-              Grid Start Time (Morning)
+              <Clock className="icon-xs text-primary" />
+              Morning Start Time (Your Choice)
             </label>
             <select
               className="form-select"
               value={settings.startHour}
-              onChange={(e) =>
-                onSaveSettings({
-                  ...settings,
-                  startHour: Number(e.target.value),
-                })
-              }
+              onChange={(e) => handleStartHourChange(Number(e.target.value))}
             >
               {START_HOUR_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -86,8 +112,8 @@ export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({
           {/* End Hour */}
           <div className="form-group">
             <label className="form-label">
-              <Clock className="icon-xs" />
-              Grid End Time (Night)
+              <Clock className="icon-xs text-primary" />
+              Grid End Time (Upto Morning or Your Choice)
             </label>
             <select
               className="form-select"
@@ -99,7 +125,7 @@ export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({
                 })
               }
             >
-              {END_HOUR_OPTIONS.map((opt) => (
+              {endHourOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -110,7 +136,7 @@ export const GridSettingsModal: React.FC<GridSettingsModalProps> = ({
           {/* Spacing / Row Height */}
           <div className="form-group">
             <label className="form-label">
-              <LayoutGrid className="icon-xs" />
+              <LayoutGrid className="icon-xs text-primary" />
               Row Spacing / Resolution
             </label>
             <select

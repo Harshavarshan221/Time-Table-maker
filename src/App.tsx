@@ -47,6 +47,8 @@ import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, History, Rotat
 import { TrashHistoryModal } from './components/TrashHistoryModal';
 import type { DeletedTaskRecord } from './components/TrashHistoryModal';
 
+import { ScrollableCalendarStrip } from './components/ScrollableCalendarStrip';
+
 export const App: React.FC = () => {
   // Auth state
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -62,7 +64,7 @@ export const App: React.FC = () => {
       const saved = localStorage.getItem('timetable_grid_settings');
       if (saved) return JSON.parse(saved);
     } catch {}
-    return { startHour: 8, endHour: 22, hourHeightPx: 64 };
+    return { startHour: 4, endHour: 24, hourHeightPx: 64 };
   });
   const [isGridSettingsModalOpen, setIsGridSettingsModalOpen] = useState(false);
 
@@ -693,6 +695,10 @@ export const App: React.FC = () => {
           )}
 
           <main className="timetable-main">
+            <ScrollableCalendarStrip
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+            />
             <TimetableGrid
               currentWeekInfo={currentWeekInfo}
               scheduledTasks={weekScheduledTasks}
