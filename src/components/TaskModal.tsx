@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Clock, Calendar, Tag, FileText, ArrowLeftRight, Settings } from 'lucide-react';
+import { X, Trash2, Clock, Calendar, Tag, FileText, ArrowLeftRight, Settings, Copy } from 'lucide-react';
 import type { Task, CategoryConfig, WeekInfo } from '../types/timetable';
 
 interface TaskModalProps {
@@ -8,6 +8,7 @@ interface TaskModalProps {
   onSave: (taskData: Partial<Task>) => void;
   onDelete?: (taskId: string) => void;
   onUnschedule?: (taskId: string) => void;
+  onDuplicate?: (task: Task) => void;
   taskToEdit?: Task | null;
   currentWeekInfo: WeekInfo;
   categories: CategoryConfig[];
@@ -32,6 +33,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   onSave,
   onDelete,
   onUnschedule,
+  onDuplicate,
   taskToEdit,
   currentWeekInfo,
   categories,
@@ -89,9 +91,25 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3 className="modal-title">
-            {taskToEdit ? 'Edit Task' : 'Create Task'}
-          </h3>
+          <div className="modal-title-row">
+            <h3 className="modal-title">
+              {taskToEdit ? 'Edit Task' : 'Create Task'}
+            </h3>
+            {taskToEdit && onDuplicate && (
+              <button
+                type="button"
+                className="btn-duplicate-header"
+                onClick={() => {
+                  onDuplicate(taskToEdit);
+                  onClose();
+                }}
+                title="Duplicate this task"
+              >
+                <Copy className="icon-xs" />
+                <span>Duplicate</span>
+              </button>
+            )}
+          </div>
           <button 
             className="btn-modal-close" 
             onClick={onClose}

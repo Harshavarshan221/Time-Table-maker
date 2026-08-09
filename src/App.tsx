@@ -360,6 +360,30 @@ export const App: React.FC = () => {
     }
   };
 
+  // Duplicate task
+  const handleDuplicateTask = (task: Task) => {
+    const newId = `task-${Date.now()}`;
+    const duplicatedTask: Task = {
+      ...task,
+      id: newId,
+      title: `${task.title} (Copy)`,
+    };
+
+    if (task.weekId && task.dayOfWeek !== undefined && task.startTime !== undefined) {
+      const updated = [...allScheduledTasks, duplicatedTask];
+      updateScheduledTasks(updated);
+      if (currentUser) {
+        saveScheduledTaskToFirestore(currentUser.uid, duplicatedTask);
+      }
+    } else {
+      const updated = [...unscheduledTasks, duplicatedTask];
+      updateUnscheduledTasks(updated);
+      if (currentUser) {
+        saveUnscheduledTaskToFirestore(currentUser.uid, duplicatedTask);
+      }
+    }
+  };
+
   // Delete task
   const handleDeleteTask = (taskId: string) => {
     const scheduledTask = allScheduledTasks.find((t) => t.id === taskId);
@@ -465,6 +489,7 @@ export const App: React.FC = () => {
               onAddTaskClick={handleOpenCreateModal}
               onDeleteTask={handleDeleteTask}
               onEditTask={handleOpenEditModal}
+              onDuplicateTask={handleDuplicateTask}
               onToggleSidebar={() => setIsSidebarOpen(false)}
             />
           ) : (
@@ -512,6 +537,7 @@ export const App: React.FC = () => {
         onSave={handleSaveTask}
         onDelete={handleDeleteTask}
         onUnschedule={handleUnscheduleTask}
+        onDuplicate={handleDuplicateTask}
         taskToEdit={taskToEdit}
         currentWeekInfo={currentWeekInfo}
         categories={categories}

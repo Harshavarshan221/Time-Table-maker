@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, GripVertical, Trash2, Clock, PanelLeftClose } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Clock, PanelLeftClose, Copy } from 'lucide-react';
 import type { Task, CategoryConfig } from '../types/timetable';
 import { getCategoryConfig } from '../constants/categories';
 import { formatDurationLabel } from '../utils/dateUtils';
@@ -10,6 +10,7 @@ interface UnscheduledTasksProps {
   onAddTaskClick: () => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask: (task: Task) => void;
+  onDuplicateTask?: (task: Task) => void;
   onToggleSidebar?: () => void;
 }
 
@@ -19,6 +20,7 @@ export const UnscheduledTasks: React.FC<UnscheduledTasksProps> = ({
   onAddTaskClick,
   onDeleteTask,
   onEditTask,
+  onDuplicateTask,
   onToggleSidebar,
 }) => {
   const handleDragStart = (e: React.DragEvent, task: Task) => {
@@ -110,17 +112,32 @@ export const UnscheduledTasks: React.FC<UnscheduledTasksProps> = ({
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  className="btn-delete-task"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteTask(task.id);
-                  }}
-                  title="Delete task"
-                >
-                  <Trash2 className="icon-xs" />
-                </button>
+                <div className="task-card-actions">
+                  {onDuplicateTask && (
+                    <button
+                      type="button"
+                      className="btn-duplicate-task"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDuplicateTask(task);
+                      }}
+                      title="Duplicate this task"
+                    >
+                      <Copy className="icon-nano" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn-delete-task"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteTask(task.id);
+                    }}
+                    title="Delete task"
+                  >
+                    <Trash2 className="icon-nano" />
+                  </button>
+                </div>
               </div>
             );
           })

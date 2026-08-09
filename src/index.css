@@ -563,6 +563,14 @@ body {
   overflow: hidden;
 }
 
+.task-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  align-self: flex-start;
+}
+
+.btn-duplicate-task,
 .btn-delete-task {
   background: transparent;
   border: none;
@@ -570,8 +578,12 @@ body {
   padding: 4px;
   cursor: pointer;
   border-radius: var(--radius-sm);
-  align-self: flex-start;
   transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.btn-duplicate-task:hover {
+  color: var(--primary);
+  background-color: var(--primary-light);
 }
 
 .btn-delete-task:hover {
@@ -1431,10 +1443,37 @@ body {
   flex-shrink: 0;
 }
 
+.modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .modal-title {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.btn-duplicate-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background-color: var(--primary-light);
+  border: 1px solid #93C5FD;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-duplicate-header:hover {
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
 }
 
 .btn-modal-close {
