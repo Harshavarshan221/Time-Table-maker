@@ -151,28 +151,46 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    // 1. Subscribe to Current Week Tasks
+    // 1. Subscribe to Current Week Tasks (Non-destructive Firestore sync)
     const unsubWeek = subscribeToWeekTasks(
       currentUser.uid,
       currentWeekInfo.weekId,
       (tasks) => {
         const userTasks = tasks.filter((t) => !isSampleTask(t));
         setAllScheduledTasks((prev) => {
-          const otherWeeks = prev.filter((t) => t.weekId !== currentWeekInfo.weekId && !isSampleTask(t));
-          const combined = [...otherWeeks, ...userTasks];
-          saveUserScheduledTasks(currentUser.uid, combined);
-          return combined;
+          if (userTasks.length > 0) {
+            const otherWeeks = prev.filter((t) => t.weekId !== currentWeekInfo.weekId && !isSampleTask(t));
+            const combined = [...otherWeeks, ...userTasks];
+            saveUserScheduledTasks(currentUser.uid, combined);
+            return combined;
+          }
+          // If Firestore is empty for this week, preserve local tasks & sync to Firestore
+          const currentWeekLocalTasks = prev.filter((t) => t.weekId === currentWeekInfo.weekId && !isSampleTask(t));
+          if (currentWeekLocalTasks.length > 0) {
+            currentWeekLocalTasks.forEach((t) => saveScheduledTaskToFirestore(currentUser.uid, t));
+          }
+          return prev;
         });
       }
     );
 
-    // 2. Subscribe to Unscheduled Tasks
+    // 2. Subscribe to Unscheduled Tasks (Non-destructive Firestore sync)
     const unsubUnscheduled = subscribeToUnscheduledTasks(
       currentUser.uid,
       (tasks) => {
         const userTasks = tasks.filter((t) => !isSampleTask(t));
-        setUnscheduledTasks(userTasks);
-        saveUserUnscheduledTasks(currentUser.uid, userTasks);
+        setUnscheduledTasks((prev) => {
+          if (userTasks.length > 0) {
+            saveUserUnscheduledTasks(currentUser.uid, userTasks);
+            return userTasks;
+          }
+          // If Firestore is empty, preserve local tasks & sync to Firestore
+          const localUnscheduled = prev.filter((t) => !isSampleTask(t));
+          if (localUnscheduled.length > 0) {
+            localUnscheduled.forEach((t) => saveUnscheduledTaskToFirestore(currentUser.uid, t));
+          }
+          return prev;
+        });
       }
     );
 
