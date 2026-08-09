@@ -101,11 +101,16 @@ export const App: React.FC = () => {
     if (isAuthInitializing) return;
 
     if (currentUser) {
-      // Load user cached tasks instantly so there's zero delay or data loss on reload!
       const cachedScheduled = loadUserScheduledTasks(currentUser.uid);
       const cachedUnscheduled = loadUserUnscheduledTasks(currentUser.uid);
-      setAllScheduledTasks(cachedScheduled);
-      setUnscheduledTasks(cachedUnscheduled);
+
+      // If user has cached data, load it instantly; otherwise fallback to active tasks so guest work is NOT erased!
+      if (cachedScheduled.length > 0) {
+        setAllScheduledTasks(cachedScheduled);
+      }
+      if (cachedUnscheduled.length > 0) {
+        setUnscheduledTasks(cachedUnscheduled);
+      }
       setCategories(loadCategories());
     } else {
       setAllScheduledTasks(loadAllScheduledTasks());
@@ -114,7 +119,7 @@ export const App: React.FC = () => {
     }
   }, [currentUser, isAuthInitializing]);
 
-  // Firestore Real-Time Subscriptions when User is Authenticated
+  // Firestore Real-Time Subscriptions & Migration when User is Authenticated
   useEffect(() => {
     if (!currentUser) return;
 
@@ -123,12 +128,18 @@ export const App: React.FC = () => {
       currentUser.uid,
       currentWeekInfo.weekId,
       (tasks) => {
-        setAllScheduledTasks((prev) => {
-          const otherWeeks = prev.filter((t) => t.weekId !== currentWeekInfo.weekId);
-          const combined = [...otherWeeks, ...tasks];
-          saveUserScheduledTasks(currentUser.uid, combined);
-          return combined;
-        });
+        if (tasks.length === 0) {
+          // If Firestore for current week has no items yet, upload any active tasks for current week to Firestore!
+          const currentWeekTasks = allScheduledTasks.filter((t) => t.weekId === currentWeekInfo.weekId);
+          currentWeekTasks.forEach((t) => saveScheduledTaskToFirestore(currentUser.uid, t));
+        } else {
+          setAllScheduledTasks((prev) => {
+            const otherWeeks = prev.filter((t) => t.weekId !== currentWeekInfo.weekId);
+            const combined = [...otherWeeks, ...tasks];
+            saveUserScheduledTasks(currentUser.uid, combined);
+            return combined;
+          });
+        }
       }
     );
 
@@ -136,8 +147,13 @@ export const App: React.FC = () => {
     const unsubUnscheduled = subscribeToUnscheduledTasks(
       currentUser.uid,
       (tasks) => {
-        setUnscheduledTasks(tasks);
-        saveUserUnscheduledTasks(currentUser.uid, tasks);
+        if (tasks.length === 0 && unscheduledTasks.length > 0) {
+          // Upload unscheduled tasks to Firestore for new user
+          unscheduledTasks.forEach((t) => saveUnscheduledTaskToFirestore(currentUser.uid, t));
+        } else if (tasks.length > 0) {
+          setUnscheduledTasks(tasks);
+          saveUserUnscheduledTasks(currentUser.uid, tasks);
+        }
       }
     );
 
@@ -453,7 +469,10 @@ export const App: React.FC = () => {
                 )}
               </div>
               <div className="user-info-text">
-                <span className="user-name">{currentUser.displayName || currentUser.email?.split('@')[0]}</span>
+                <span className="user-name">{currentUser.displayName || currentUser.email}</span>
+                {currentUser.displayName && currentUser.email && (
+                  <span className="user-email-sub">{currentUser.email}</span>
+                )}
                 <span className="cloud-status"><CloudCheck className="icon-nano" /> Cloud Synced</span>
               </div>
               <button

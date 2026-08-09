@@ -1879,6 +1879,13 @@ body {
   line-height: 1.1;
 }
 
+.user-email-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.1;
+}
+
 .cloud-status {
   font-size: 0.68rem;
   color: #10B981;
