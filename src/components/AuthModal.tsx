@@ -29,7 +29,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       onClose();
     } catch (err: any) {
       console.error('Google Sign In Error:', err);
-      setErrorMessage(err.message || 'Google Sign-In failed. Please try again.');
+      let msg = err.message || 'Google Sign-In failed.';
+      if (err.code === 'auth/api-key-not-valid' || err.message?.includes('api-key-not-valid')) {
+        msg = 'Invalid Firebase API key. Please double-check your VITE_FIREBASE_API_KEY in Vercel / .env.local and redeploy.';
+      } else if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+        msg = 'Domain not authorized. Please add this domain to Firebase Console -> Authentication -> Settings -> Authorized domains.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        msg = 'Google Sign-In disabled. Enable Google provider in Firebase Console -> Authentication -> Sign-in method.';
+      }
+      setErrorMessage(msg);
     } finally {
       setIsLoading(false);
     }
@@ -51,12 +59,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     } catch (err: any) {
       console.error('Email Auth Error:', err);
       let msg = err.message || 'Authentication failed.';
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+      if (err.code === 'auth/api-key-not-valid' || err.message?.includes('api-key-not-valid')) {
+        msg = 'Invalid Firebase API key. Please double-check your VITE_FIREBASE_API_KEY in Vercel / .env.local and redeploy.';
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
         msg = 'Invalid email or password. Please check your credentials.';
       } else if (err.code === 'auth/email-already-in-use') {
         msg = 'An account with this email already exists. Try signing in instead.';
       } else if (err.code === 'auth/weak-password') {
         msg = 'Password should be at least 6 characters.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        msg = 'Email/Password sign-in is disabled in Firebase Console -> Authentication -> Sign-in method.';
       }
       setErrorMessage(msg);
     } finally {
