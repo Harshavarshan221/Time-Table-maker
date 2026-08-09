@@ -208,31 +208,8 @@ export const App: React.FC = () => {
     }
   };
 
-  // Requirement 1 Fix: Safe Category Deletion (re-assigns tasks to 'Other')
+  // Safe Category Management (Updates categories without mutating tasks)
   const handleSaveCategories = (newCategories: CategoryConfig[]) => {
-    const newCatNames = new Set(newCategories.map((c) => c.name));
-    
-    // Re-assign tasks whose category was deleted to 'Other'
-    const updatedScheduled = allScheduledTasks.map((t) => {
-      if (!newCatNames.has(t.category)) {
-        const updated = { ...t, category: 'Other' };
-        if (currentUser && t.weekId) saveScheduledTaskToFirestore(currentUser.uid, updated);
-        return updated;
-      }
-      return t;
-    });
-
-    const updatedUnscheduled = unscheduledTasks.map((t) => {
-      if (!newCatNames.has(t.category)) {
-        const updated = { ...t, category: 'Other' };
-        if (currentUser) saveUnscheduledTaskToFirestore(currentUser.uid, updated);
-        return updated;
-      }
-      return t;
-    });
-
-    updateScheduledTasks(updatedScheduled);
-    updateUnscheduledTasks(updatedUnscheduled);
     setCategories(newCategories);
 
     if (currentUser) {
@@ -248,23 +225,16 @@ export const App: React.FC = () => {
     (t) => t.weekId === currentWeekInfo.weekId
   );
 
-  // Drag & Drop onto grid
-  const handleDropTask = (
-    taskId: string,
-    dayIndex: number,
-    startTime: string,
-    sourceType: 'UNSCHEDULED_TASK' | 'SCHEDULED_TASK',
-    rawTaskData?: Task
-  ) => {
-    if (sourceType === 'UNSCHEDULED_TASK') {
-      const task = unscheduledTasks.find((t) => t.id === taskId) || rawTaskData;
-      if (!task) return;
+  // Drag & drop task onto grid
+  const handleDropTask = (taskId: string, dayIndex: number, startTime: string) => {
+    const unscheduledTask = unscheduledTasks.find((t) => t.id === taskId);
 
+    if (unscheduledTask) {
       const remainingUnscheduled = unscheduledTasks.filter((t) => t.id !== taskId);
       updateUnscheduledTasks(remainingUnscheduled);
 
       const scheduledTask: Task = {
-        ...task,
+        ...unscheduledTask,
         weekId: currentWeekInfo.weekId,
         dayOfWeek: dayIndex,
         startTime,
@@ -386,7 +356,7 @@ export const App: React.FC = () => {
       if (taskData.dayOfWeek !== undefined && taskData.startTime) {
         const newScheduled: Task = {
           id: newId,
-          title: taskData.title || 'New Task',
+          title: taskData.title || 'Untitled Task',
           category: taskData.category || defaultCat,
           durationMinutes: taskData.durationMinutes || 60,
           description: taskData.description,
@@ -401,7 +371,7 @@ export const App: React.FC = () => {
       } else {
         const newUnscheduled: Task = {
           id: newId,
-          title: taskData.title || 'New Task',
+          title: taskData.title || 'Untitled Task',
           category: taskData.category || defaultCat,
           durationMinutes: taskData.durationMinutes || 60,
           description: taskData.description,
@@ -455,20 +425,28 @@ export const App: React.FC = () => {
     }
   };
 
-  // Requirement 2 Fix: Smart Task Deletion Prompt & Single/All options
+  // Precision Single Task Deletion (Deletes ONLY the target taskId)
   const handleDeleteTask = (taskId: string) => {
     const targetTask = allScheduledTasks.find((t) => t.id === taskId) || unscheduledTasks.find((t) => t.id === taskId);
     if (!targetTask) return;
 
-    const matchCount =
-      allScheduledTasks.filter((t) => t.title.toLowerCase() === targetTask.title.toLowerCase()).length +
-      unscheduledTasks.filter((t) => t.title.toLowerCase() === targetTask.title.toLowerCase()).length;
+    // Filter out ONLY the exact task matching this taskId
+    updateScheduledTasks(allScheduledTasks.filter((t) => t.id !== taskId));
+    updateUnscheduledTasks(unscheduledTasks.filter((t) => t.id !== taskId));
 
-    if (matchCount > 1) {
-      setDeletePromptTask(targetTask);
-    } else {
-      executeDeleteSingleTask(targetTask);
+    if (currentUser) {
+      if (targetTask.weekId) deleteScheduledTaskFromFirestore(currentUser.uid, targetTask.weekId, taskId);
+      deleteUnscheduledTaskFromFirestore(currentUser.uid, taskId);
     }
+
+    // Save to Trash History for 1-click Undo
+    const record: DeletedTaskRecord = { task: targetTask, deletedAt: Date.now() };
+    setDeletedTasksHistory((prev) => [record, ...prev]);
+    setToastNotification({ message: `Deleted "${targetTask.title}"`, record });
+
+    setTimeout(() => {
+      setToastNotification((prev) => (prev?.record === record ? null : prev));
+    }, 8000);
   };
 
   // Execute single task deletion
