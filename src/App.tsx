@@ -43,11 +43,17 @@ import {
   saveCategoriesToFirestore,
   deleteCategoryFromFirestore,
 } from './utils/firestoreStorage';
-import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, History, RotateCcw, X } from 'lucide-react';
+import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, History, RotateCcw, X, Bell } from 'lucide-react';
 import { TrashHistoryModal } from './components/TrashHistoryModal';
 import type { DeletedTaskRecord } from './components/TrashHistoryModal';
 
 import { ScrollableCalendarStrip } from './components/ScrollableCalendarStrip';
+import { TodayTasksModal } from './components/TodayTasksModal';
+import {
+  getTodayTasks,
+  sendDesktopNotification,
+  isNotificationGranted,
+} from './utils/notificationUtils';
 
 export const App: React.FC = () => {
   // Auth state
@@ -68,6 +74,9 @@ export const App: React.FC = () => {
   });
   const [isGridSettingsModalOpen, setIsGridSettingsModalOpen] = useState(false);
 
+  // Today's Tasks Modal state
+  const [isTodayTasksModalOpen, setIsTodayTasksModalOpen] = useState(false);
+
   // Date and Week state
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentWeekInfo, setCurrentWeekInfo] = useState<WeekInfo>(() =>
@@ -83,6 +92,40 @@ export const App: React.FC = () => {
   const [deletedTasksHistory, setDeletedTasksHistory] = useState<DeletedTaskRecord[]>([]);
   const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
   const [toastNotification, setToastNotification] = useState<{ message: string; record?: DeletedTaskRecord } | null>(null);
+
+  // Calculate Today's Scheduled Tasks
+  const todayDayIndex = (new Date().getDay() + 6) % 7; // 0=Mon, ..., 6=Sun
+  const todayWeekId = getWeekInfo(new Date()).weekId;
+  const todayTasks = getTodayTasks(allScheduledTasks, todayDayIndex, todayWeekId);
+
+  // Real-time task start notification checker (runs every 30 seconds)
+  useEffect(() => {
+    if (!isNotificationGranted()) return;
+
+    const notifiedTaskIds = new Set<string>();
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+
+      todayTasks.forEach((task) => {
+        if (task.startTime && !notifiedTaskIds.has(task.id)) {
+          const [h, m] = task.startTime.split(':').map(Number);
+          const startMins = h * 60 + m;
+
+          if (currentMins === startMins) {
+            notifiedTaskIds.add(task.id);
+            sendDesktopNotification(
+              `⏰ Task Starting Now: ${task.title}`,
+              `Category: ${task.category} | Duration: ${task.durationMinutes} mins`
+            );
+          }
+        }
+      });
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [todayTasks]);
 
   // Save trash history to local storage
   useEffect(() => {
@@ -635,6 +678,20 @@ export const App: React.FC = () => {
             </button>
           )}
 
+          {/* Today's Tasks & Reminders Popup Trigger */}
+          <button
+            type="button"
+            className="btn-today-tasks-trigger"
+            onClick={() => setIsTodayTasksModalOpen(true)}
+            title="View Today's Scheduled Tasks & Notifications"
+          >
+            <Bell className="icon-xs" />
+            <span>Today's Schedule</span>
+            {todayTasks.length > 0 && (
+              <span className="today-tasks-count-badge">{todayTasks.length}</span>
+            )}
+          </button>
+
           <button
             type="button"
             className="btn-categories-trigger"
@@ -762,6 +819,15 @@ export const App: React.FC = () => {
         onClose={() => setIsGridSettingsModalOpen(false)}
         settings={gridSettings}
         onSaveSettings={setGridSettings}
+      />
+
+      {/* Today's Tasks Schedule & Notifications Modal */}
+      <TodayTasksModal
+        isOpen={isTodayTasksModalOpen}
+        onClose={() => setIsTodayTasksModalOpen(false)}
+        todayTasks={todayTasks}
+        categories={categories}
+        onEditTask={handleOpenEditModal}
       />
 
       {/* Trash History & Recovery Modal */}

@@ -2457,3 +2457,240 @@ body {
   border-radius: 50%;
   box-shadow: 0 0 6px #10B981;
 }
+
+/* ==========================================================================
+   TODAY'S SCHEDULE & NOTIFICATIONS MODAL
+   ========================================================================== */
+.btn-today-tasks-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+  border: 1.5px solid #93C5FD;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1D4ED8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.12);
+  position: relative;
+}
+
+.btn-today-tasks-trigger:hover {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  border-color: #1D4ED8;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.today-tasks-count-badge {
+  background-color: #EF4444;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 12px;
+  line-height: 1;
+}
+
+.today-tasks-modal {
+  max-width: 520px;
+  width: 92%;
+}
+
+.today-date-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: var(--primary-light);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.notification-permission-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
+  border: 1px solid #BFDBFE;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}
+
+.banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.banner-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.banner-sub {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.btn-notification-toggle {
+  padding: 6px 12px;
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-notification-toggle:hover,
+.btn-notification-toggle.enabled {
+  background-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.today-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.today-task-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.today-task-item:hover {
+  transform: translateX(2px);
+  box-shadow: var(--shadow-md);
+  border-color: #93C5FD;
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.item-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-pill-sm {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  text-transform: uppercase;
+}
+
+.today-task-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.status-badge.live {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+}
+
+.pulse-icon {
+  animation: pulseGlow 1.2s infinite alternate;
+}
+
+.status-badge.upcoming {
+  background-color: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid #93C5FD;
+}
+
+.status-badge.completed {
+  background-color: #F0FDF4;
+  color: #166534;
+  border: 1px solid #86EFAC;
+}
+
+.item-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.time-range-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.today-task-desc {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.empty-today-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.empty-today-state .empty-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.empty-today-state .empty-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.empty-today-state .empty-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
