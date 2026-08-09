@@ -111,8 +111,12 @@ export const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Helper to check if task is an initial demo sample task
-  const isSampleTask = (t: Task) => t.id.startsWith('sample-') || t.id.startsWith('unsched-');
+  // Helper to check if task is an initial demo sample task (Strict Set check)
+  const DEMO_SAMPLE_IDS = new Set([
+    'sample-1', 'sample-2', 'sample-3', 'sample-4', 'sample-5',
+    'unsched-1', 'unsched-2', 'unsched-3', 'unsched-4', 'unsched-5', 'unsched-6'
+  ]);
+  const isSampleTask = (t: Task) => DEMO_SAMPLE_IDS.has(t.id);
 
   // Tasks & Categories state initialization based on auth
   useEffect(() => {
@@ -147,36 +151,28 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    // 1. Subscribe to Current Week Tasks (Non-destructive Map merge)
+    // 1. Subscribe to Current Week Tasks
     const unsubWeek = subscribeToWeekTasks(
       currentUser.uid,
       currentWeekInfo.weekId,
       (tasks) => {
         const userTasks = tasks.filter((t) => !isSampleTask(t));
         setAllScheduledTasks((prev) => {
-          const map = new Map<string, Task>();
-          prev.forEach((t) => !isSampleTask(t) && map.set(t.id, t));
-          userTasks.forEach((t) => map.set(t.id, t));
-          const combined = Array.from(map.values());
+          const otherWeeks = prev.filter((t) => t.weekId !== currentWeekInfo.weekId && !isSampleTask(t));
+          const combined = [...otherWeeks, ...userTasks];
           saveUserScheduledTasks(currentUser.uid, combined);
           return combined;
         });
       }
     );
 
-    // 2. Subscribe to Unscheduled Tasks (Non-destructive Map merge)
+    // 2. Subscribe to Unscheduled Tasks
     const unsubUnscheduled = subscribeToUnscheduledTasks(
       currentUser.uid,
       (tasks) => {
         const userTasks = tasks.filter((t) => !isSampleTask(t));
-        setUnscheduledTasks((prev) => {
-          const map = new Map<string, Task>();
-          prev.forEach((t) => !isSampleTask(t) && map.set(t.id, t));
-          userTasks.forEach((t) => map.set(t.id, t));
-          const combined = Array.from(map.values());
-          saveUserUnscheduledTasks(currentUser.uid, combined);
-          return combined;
-        });
+        setUnscheduledTasks(userTasks);
+        saveUserUnscheduledTasks(currentUser.uid, userTasks);
       }
     );
 
