@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth } from './firebase';
 import { WeekSelector } from './components/WeekSelector';
@@ -83,8 +83,12 @@ export const App: React.FC = () => {
 
   const [isAuthInitializing, setIsAuthInitializing] = useState(true);
 
-  // Auth observer
+  // Auth observer & Redirect result handler
   useEffect(() => {
+    getRedirectResult(auth).catch((err) => {
+      console.warn('Redirect auth notice:', err);
+    });
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setIsAuthInitializing(false);

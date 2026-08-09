@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   signInWithPopup,
+  signInWithRedirect,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from 'firebase/auth';
@@ -29,13 +30,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       onClose();
     } catch (err: any) {
       console.error('Google Sign In Error:', err);
-      let msg = err.message || 'Google Sign-In failed.';
-      if (err.code === 'auth/api-key-not-valid' || err.message?.includes('api-key-not-valid')) {
-        msg = 'Invalid Firebase API key. Please double-check your VITE_FIREBASE_API_KEY in Vercel / .env.local and redeploy.';
+      let msg = 'Google Sign-In failed. Please try again.';
+
+      if (err.code === 'auth/popup-closed-by-user') {
+        msg = 'Sign-In popup was closed before completing.';
+      } else if (err.code === 'auth/popup-blocked') {
+        msg = 'Pop-up window was blocked by your browser. Please enable popups or try Email Sign-In.';
+      } else if (err.code === 'auth/api-key-not-valid' || err.message?.includes('api-key-not-valid')) {
+        msg = 'Invalid Firebase API key. Please check your Firebase settings in Vercel / .env.local.';
       } else if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
-        msg = 'Domain not authorized. Please add this domain to Firebase Console -> Authentication -> Settings -> Authorized domains.';
+        msg = 'Domain not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains.';
       } else if (err.code === 'auth/operation-not-allowed') {
-        msg = 'Google Sign-In disabled. Enable Google provider in Firebase Console -> Authentication -> Sign-in method.';
+        msg = 'Google Sign-In is disabled in Firebase Console -> Authentication -> Sign-in method.';
+      } else if (err.message?.includes('Database is closing') || err.message?.includes('closing') || err.message?.includes('hidden')) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr) {
+          msg = 'Connection interrupted. Please try Email Sign-In or reload.';
+        }
+      } else if (err.message) {
+        msg = err.message;
       }
       setErrorMessage(msg);
     } finally {
