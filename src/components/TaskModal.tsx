@@ -73,11 +73,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    const finalTitle = title.trim() || 'Untitled Task';
 
     onSave({
       id: taskToEdit?.id,
-      title: title.trim(),
+      title: finalTitle,
       category,
       durationMinutes,
       description: description.trim(),
@@ -122,14 +122,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         <form onSubmit={handleSubmit} className="modal-body">
           {/* Task Name */}
           <div className="form-group">
-            <label className="form-label">Task Name *</label>
+            <label className="form-label">Task Name (Optional)</label>
             <input
               type="text"
               className="form-input"
               placeholder="e.g. DSA Practice, React Project, Gym"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              required
               autoFocus
             />
           </div>
