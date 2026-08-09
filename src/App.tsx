@@ -40,6 +40,7 @@ import {
   deleteUnscheduledTaskFromFirestore,
   subscribeToCategories,
   saveCategoriesToFirestore,
+  deleteCategoryFromFirestore,
 } from './utils/firestoreStorage';
 import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, History, RotateCcw, X } from 'lucide-react';
 import { TrashHistoryModal } from './components/TrashHistoryModal';
@@ -217,6 +218,20 @@ export const App: React.FC = () => {
       saveCategoriesToFirestore(currentUser.uid, newCategories);
     } else {
       saveCategories(newCategories);
+    }
+  };
+
+  const handleDeleteCategory = (catId: string) => {
+    if (categories.length <= 1) return;
+
+    const remaining = categories.filter((c) => c.id !== catId);
+    setCategories(remaining);
+
+    if (currentUser) {
+      saveUserCategories(currentUser.uid, remaining);
+      deleteCategoryFromFirestore(currentUser.uid, catId);
+    } else {
+      saveCategories(remaining);
     }
   };
 
@@ -695,6 +710,7 @@ export const App: React.FC = () => {
         onClose={() => setIsCategoryManagerOpen(false)}
         categories={categories}
         onSaveCategories={handleSaveCategories}
+        onDeleteCategory={handleDeleteCategory}
       />
 
       {/* Auth Sign In Modal */}

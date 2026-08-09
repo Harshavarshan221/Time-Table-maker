@@ -8,6 +8,7 @@ interface CategoryManagerModalProps {
   onClose: () => void;
   categories: CategoryConfig[];
   onSaveCategories: (newCategories: CategoryConfig[]) => void;
+  onDeleteCategory?: (catId: string) => void;
 }
 
 export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
@@ -15,6 +16,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
   onClose,
   categories,
   onSaveCategories,
+  onDeleteCategory,
 }) => {
   const [newCatName, setNewCatName] = useState('');
   const [newCatHex, setNewCatHex] = useState('#3B82F6');
@@ -80,7 +82,11 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
       alert('You must have at least one category.');
       return;
     }
-    onSaveCategories(categories.filter((c) => c.id !== catId));
+    if (onDeleteCategory) {
+      onDeleteCategory(catId);
+    } else {
+      onSaveCategories(categories.filter((c) => c.id !== catId));
+    }
   };
 
   return (
