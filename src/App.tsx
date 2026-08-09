@@ -85,9 +85,13 @@ export const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Initial local storage load fallback
+  // Tasks & Categories state initialization based on auth
   useEffect(() => {
-    if (!currentUser) {
+    if (currentUser) {
+      // Reset state for logged-in user so sample template tasks do NOT linger
+      setAllScheduledTasks([]);
+      setUnscheduledTasks([]);
+    } else {
       setAllScheduledTasks(loadAllScheduledTasks());
       setUnscheduledTasks(loadUnscheduledTasks());
       setCategories(loadCategories());

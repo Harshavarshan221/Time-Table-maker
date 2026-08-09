@@ -1410,6 +1410,9 @@ body {
   box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   animation: modalFadeIn 0.15s ease-out;
 }
@@ -1425,6 +1428,7 @@ body {
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
 }
 
 .modal-title {
@@ -1452,6 +1456,22 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(90vh - 120px);
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-light);
+  position: sticky;
+  bottom: 0;
+  background-color: #FFFFFF;
+  z-index: 10;
 }
 
 .form-group {
