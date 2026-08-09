@@ -22,6 +22,10 @@ import {
   saveUnscheduledTasks,
   loadCategories,
   saveCategories,
+  loadUserScheduledTasks,
+  saveUserScheduledTasks,
+  loadUserUnscheduledTasks,
+  saveUserUnscheduledTasks,
 } from './utils/storage';
 import {
   subscribeToWeekTasks,
@@ -93,9 +97,12 @@ export const App: React.FC = () => {
     if (isAuthInitializing) return;
 
     if (currentUser) {
-      // Reset state for logged-in user so sample template tasks do NOT linger
-      setAllScheduledTasks([]);
-      setUnscheduledTasks([]);
+      // Load user cached tasks instantly so there's zero delay or data loss on reload!
+      const cachedScheduled = loadUserScheduledTasks(currentUser.uid);
+      const cachedUnscheduled = loadUserUnscheduledTasks(currentUser.uid);
+      setAllScheduledTasks(cachedScheduled);
+      setUnscheduledTasks(cachedUnscheduled);
+      setCategories(loadCategories());
     } else {
       setAllScheduledTasks(loadAllScheduledTasks());
       setUnscheduledTasks(loadUnscheduledTasks());
@@ -114,7 +121,9 @@ export const App: React.FC = () => {
       (tasks) => {
         setAllScheduledTasks((prev) => {
           const otherWeeks = prev.filter((t) => t.weekId !== currentWeekInfo.weekId);
-          return [...otherWeeks, ...tasks];
+          const combined = [...otherWeeks, ...tasks];
+          saveUserScheduledTasks(currentUser.uid, combined);
+          return combined;
         });
       }
     );
@@ -124,6 +133,7 @@ export const App: React.FC = () => {
       currentUser.uid,
       (tasks) => {
         setUnscheduledTasks(tasks);
+        saveUserUnscheduledTasks(currentUser.uid, tasks);
       }
     );
 
@@ -150,14 +160,18 @@ export const App: React.FC = () => {
   // Task Update helper (Optimistic UI + Firestore/LocalStorage Sync)
   const updateScheduledTasks = (newTasks: Task[]) => {
     setAllScheduledTasks(newTasks);
-    if (!currentUser) {
+    if (currentUser) {
+      saveUserScheduledTasks(currentUser.uid, newTasks);
+    } else {
       saveAllScheduledTasks(newTasks);
     }
   };
 
   const updateUnscheduledTasks = (newTasks: Task[]) => {
     setUnscheduledTasks(newTasks);
-    if (!currentUser) {
+    if (currentUser) {
+      saveUserUnscheduledTasks(currentUser.uid, newTasks);
+    } else {
       saveUnscheduledTasks(newTasks);
     }
   };

@@ -160,3 +160,42 @@ export function saveCategories(categories: CategoryConfig[]): void {
   }
 }
 
+/**
+ * User-specific cache helpers for instant reload persistence
+ */
+export function loadUserScheduledTasks(uid: string): Task[] {
+  try {
+    const raw = localStorage.getItem(`timetable_user_scheduled_${uid}`);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to load user scheduled tasks:', e);
+  }
+  return [];
+}
+
+export function saveUserScheduledTasks(uid: string, tasks: Task[]): void {
+  try {
+    localStorage.setItem(`timetable_user_scheduled_${uid}`, JSON.stringify(tasks));
+  } catch (e) {
+    console.error('Failed to save user scheduled tasks:', e);
+  }
+}
+
+export function loadUserUnscheduledTasks(uid: string): Task[] {
+  try {
+    const raw = localStorage.getItem(`timetable_user_unscheduled_${uid}`);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to load user unscheduled tasks:', e);
+  }
+  return [];
+}
+
+export function saveUserUnscheduledTasks(uid: string, tasks: Task[]): void {
+  try {
+    localStorage.setItem(`timetable_user_unscheduled_${uid}`, JSON.stringify(tasks));
+  } catch (e) {
+    console.error('Failed to save user unscheduled tasks:', e);
+  }
+}
+
