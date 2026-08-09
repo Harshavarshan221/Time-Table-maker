@@ -217,3 +217,21 @@ export function saveUserCategories(uid: string, categories: CategoryConfig[]): v
   }
 }
 
+export function loadUserTrashHistory(uid: string): any[] {
+  try {
+    const raw = localStorage.getItem(`timetable_user_trash_${uid}`);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to load user trash history:', e);
+  }
+  return [];
+}
+
+export function saveUserTrashHistory(uid: string, history: any[]): void {
+  try {
+    localStorage.setItem(`timetable_user_trash_${uid}`, JSON.stringify(history));
+  } catch (e) {
+    console.error('Failed to save user trash history:', e);
+  }
+}
+

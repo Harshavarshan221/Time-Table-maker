@@ -28,6 +28,8 @@ import {
   saveUserUnscheduledTasks,
   loadUserCategories,
   saveUserCategories,
+  loadUserTrashHistory,
+  saveUserTrashHistory,
 } from './utils/storage';
 import {
   subscribeToWeekTasks,
@@ -42,7 +44,6 @@ import {
 import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, History, RotateCcw, X } from 'lucide-react';
 import { TrashHistoryModal } from './components/TrashHistoryModal';
 import type { DeletedTaskRecord } from './components/TrashHistoryModal';
-import { DeleteConfirmModal } from './components/DeleteConfirmModal';
 
 export const App: React.FC = () => {
   // Auth state
@@ -75,16 +76,8 @@ export const App: React.FC = () => {
   const [categories, setCategories] = useState<CategoryConfig[]>([]);
 
   // Trash & Delete History state
-  const [deletedTasksHistory, setDeletedTasksHistory] = useState<DeletedTaskRecord[]>(() => {
-    try {
-      const raw = localStorage.getItem('timetable_trash_history_v1');
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [deletedTasksHistory, setDeletedTasksHistory] = useState<DeletedTaskRecord[]>([]);
   const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
-  const [deletePromptTask, setDeletePromptTask] = useState<Task | null>(null);
   const [toastNotification, setToastNotification] = useState<{ message: string; record?: DeletedTaskRecord } | null>(null);
 
   // Save trash history to local storage
@@ -130,10 +123,17 @@ export const App: React.FC = () => {
       setAllScheduledTasks(cachedScheduled);
       setUnscheduledTasks(cachedUnscheduled);
       setCategories(loadUserCategories(currentUser.uid));
+      setDeletedTasksHistory(loadUserTrashHistory(currentUser.uid));
     } else {
       setAllScheduledTasks(loadAllScheduledTasks());
       setUnscheduledTasks(loadUnscheduledTasks());
       setCategories(loadCategories());
+      try {
+        const raw = localStorage.getItem('timetable_trash_history_v1');
+        setDeletedTasksHistory(raw ? JSON.parse(raw) : []);
+      } catch (e) {
+        setDeletedTasksHistory([]);
+      }
     }
   }, [currentUser, isAuthInitializing]);
 
@@ -425,74 +425,47 @@ export const App: React.FC = () => {
     }
   };
 
-  // Precision Single Task Deletion (Deletes ONLY the target taskId)
+  // Precision Single Task Deletion (Deletes ONLY the target taskId & saves to Trash History)
   const handleDeleteTask = (taskId: string) => {
-    const targetTask = allScheduledTasks.find((t) => t.id === taskId) || unscheduledTasks.find((t) => t.id === taskId);
+    const scheduledTask = allScheduledTasks.find((t) => t.id === taskId);
+    const unscheduledTask = unscheduledTasks.find((t) => t.id === taskId);
+    const targetTask = scheduledTask || unscheduledTask;
     if (!targetTask) return;
 
-    // Filter out ONLY the exact task matching this taskId
-    updateScheduledTasks(allScheduledTasks.filter((t) => t.id !== taskId));
-    updateUnscheduledTasks(unscheduledTasks.filter((t) => t.id !== taskId));
-
-    if (currentUser) {
-      if (targetTask.weekId) deleteScheduledTaskFromFirestore(currentUser.uid, targetTask.weekId, taskId);
-      deleteUnscheduledTaskFromFirestore(currentUser.uid, taskId);
-    }
-
-    // Save to Trash History for 1-click Undo
-    const record: DeletedTaskRecord = { task: targetTask, deletedAt: Date.now() };
-    setDeletedTasksHistory((prev) => [record, ...prev]);
-    setToastNotification({ message: `Deleted "${targetTask.title}"`, record });
-
-    setTimeout(() => {
-      setToastNotification((prev) => (prev?.record === record ? null : prev));
-    }, 8000);
-  };
-
-  // Execute single task deletion
-  const executeDeleteSingleTask = (task: Task) => {
-    updateScheduledTasks(allScheduledTasks.filter((t) => t.id !== task.id));
-    updateUnscheduledTasks(unscheduledTasks.filter((t) => t.id !== task.id));
-
-    if (currentUser) {
-      if (task.weekId) deleteScheduledTaskFromFirestore(currentUser.uid, task.weekId, task.id);
-      deleteUnscheduledTaskFromFirestore(currentUser.uid, task.id);
+    if (scheduledTask) {
+      const updated = allScheduledTasks.filter((t) => t.id !== taskId);
+      updateScheduledTasks(updated);
+      if (currentUser && scheduledTask.weekId) {
+        deleteScheduledTaskFromFirestore(currentUser.uid, scheduledTask.weekId, taskId);
+      }
+    } else if (unscheduledTask) {
+      const updated = unscheduledTasks.filter((t) => t.id !== taskId);
+      updateUnscheduledTasks(updated);
+      if (currentUser) {
+        deleteUnscheduledTaskFromFirestore(currentUser.uid, taskId);
+      }
     }
 
     // Save to Trash History
-    const record: DeletedTaskRecord = { task, deletedAt: Date.now() };
-    setDeletedTasksHistory((prev) => [record, ...prev]);
-    setToastNotification({ message: `Deleted "${task.title}"`, record });
+    const record: DeletedTaskRecord = { task: targetTask, deletedAt: Date.now() };
+    const newHistory = [record, ...deletedTasksHistory];
+    setDeletedTasksHistory(newHistory);
 
+    if (currentUser) {
+      saveUserTrashHistory(currentUser.uid, newHistory);
+    } else {
+      try {
+        localStorage.setItem('timetable_trash_history_v1', JSON.stringify(newHistory));
+      } catch (e) {}
+    }
+
+    setToastNotification({ message: `Deleted "${targetTask.title}"`, record });
     setTimeout(() => {
       setToastNotification((prev) => (prev?.record === record ? null : prev));
     }, 8000);
   };
 
-  // Execute delete all matching tasks across timetable
-  const executeDeleteAllMatchingTasks = (task: Task) => {
-    const matchingScheduled = allScheduledTasks.filter((t) => t.title.toLowerCase() === task.title.toLowerCase());
-    const matchingUnscheduled = unscheduledTasks.filter((t) => t.title.toLowerCase() === task.title.toLowerCase());
-    const allMatching = [...matchingScheduled, ...matchingUnscheduled];
-
-    updateScheduledTasks(allScheduledTasks.filter((t) => t.title.toLowerCase() !== task.title.toLowerCase()));
-    updateUnscheduledTasks(unscheduledTasks.filter((t) => t.title.toLowerCase() !== task.title.toLowerCase()));
-
-    if (currentUser) {
-      matchingScheduled.forEach((t) => t.weekId && deleteScheduledTaskFromFirestore(currentUser.uid, t.weekId, t.id));
-      matchingUnscheduled.forEach((t) => deleteUnscheduledTaskFromFirestore(currentUser.uid, t.id));
-    }
-
-    const records: DeletedTaskRecord[] = allMatching.map((t) => ({ task: t, deletedAt: Date.now() }));
-    setDeletedTasksHistory((prev) => [...records, ...prev]);
-    setToastNotification({ message: `Deleted ${allMatching.length} instances of "${task.title}"`, record: records[0] });
-
-    setTimeout(() => {
-      setToastNotification((prev) => (prev?.record === records[0] ? null : prev));
-    }, 8000);
-  };
-
-  // Requirement 3 Fix: Restore Task from Trash History
+  // Restore Task from Trash History
   const handleRestoreTask = (record: DeletedTaskRecord) => {
     const task = record.task;
 
@@ -504,7 +477,16 @@ export const App: React.FC = () => {
       if (currentUser) saveUnscheduledTaskToFirestore(currentUser.uid, task);
     }
 
-    setDeletedTasksHistory((prev) => prev.filter((r) => r !== record));
+    const newHistory = deletedTasksHistory.filter((r) => r !== record);
+    setDeletedTasksHistory(newHistory);
+    if (currentUser) {
+      saveUserTrashHistory(currentUser.uid, newHistory);
+    } else {
+      try {
+        localStorage.setItem('timetable_trash_history_v1', JSON.stringify(newHistory));
+      } catch (e) {}
+    }
+
     setToastNotification({ message: `Restored "${task.title}"` });
   };
 
@@ -519,13 +501,25 @@ export const App: React.FC = () => {
         if (currentUser) saveUnscheduledTaskToFirestore(currentUser.uid, task);
       }
     });
+
     setDeletedTasksHistory([]);
+    if (currentUser) {
+      saveUserTrashHistory(currentUser.uid, []);
+    } else {
+      localStorage.removeItem('timetable_trash_history_v1');
+    }
+
     setIsTrashModalOpen(false);
     setToastNotification({ message: 'Restored all deleted tasks!' });
   };
 
   const handleClearTrash = () => {
     setDeletedTasksHistory([]);
+    if (currentUser) {
+      saveUserTrashHistory(currentUser.uid, []);
+    } else {
+      localStorage.removeItem('timetable_trash_history_v1');
+    }
     setIsTrashModalOpen(false);
   };
 
@@ -726,21 +720,6 @@ export const App: React.FC = () => {
         onRestoreTask={handleRestoreTask}
         onRestoreAll={handleRestoreAllTrash}
         onClearTrash={handleClearTrash}
-      />
-
-      {/* Smart Delete Confirmation Prompt Modal */}
-      <DeleteConfirmModal
-        isOpen={deletePromptTask !== null}
-        onClose={() => setDeletePromptTask(null)}
-        task={deletePromptTask}
-        matchCount={
-          deletePromptTask
-            ? allScheduledTasks.filter((t) => t.title.toLowerCase() === deletePromptTask.title.toLowerCase()).length +
-              unscheduledTasks.filter((t) => t.title.toLowerCase() === deletePromptTask.title.toLowerCase()).length
-            : 0
-        }
-        onConfirmSingle={() => deletePromptTask && executeDeleteSingleTask(deletePromptTask)}
-        onConfirmAll={() => deletePromptTask && executeDeleteAllMatchingTasks(deletePromptTask)}
       />
 
       {/* Floating Undo Toast Notification */}
