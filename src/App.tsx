@@ -15,6 +15,7 @@ import type { AppView } from './components/ViewSwitcher';
 import { AnalyticsView } from './components/AnalyticsView';
 import type { Task, WeekInfo, CategoryConfig } from './types/timetable';
 import { getWeekInfo } from './utils/dateUtils';
+import { DEFAULT_CATEGORIES } from './constants/categories';
 import {
   loadAllScheduledTasks,
   saveAllScheduledTasks,
@@ -123,7 +124,11 @@ export const App: React.FC = () => {
 
       setAllScheduledTasks(cachedScheduled);
       setUnscheduledTasks(cachedUnscheduled);
-      setCategories(loadUserCategories(currentUser.uid));
+      const userCats = loadUserCategories(currentUser.uid);
+      const safeCats = userCats && userCats.length > 0 ? userCats : DEFAULT_CATEGORIES;
+      setCategories(safeCats);
+      saveUserCategories(currentUser.uid, safeCats);
+      saveCategoriesToFirestore(currentUser.uid, safeCats);
       setDeletedTasksHistory(loadUserTrashHistory(currentUser.uid));
     } else {
       setAllScheduledTasks(loadAllScheduledTasks());

@@ -27,6 +27,8 @@ const DURATION_OPTIONS = [
   { label: '4 hours', value: 240 },
 ];
 
+import { DEFAULT_CATEGORIES } from '../constants/categories';
+
 export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   onClose,
@@ -41,8 +43,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   defaultDayIndex = 0,
   defaultStartTime = '10:00',
 }) => {
+  const safeCategories = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<string>(categories[0]?.name || 'DSA');
+  const [category, setCategory] = useState<string>(safeCategories[0]?.name || 'DSA');
   const [durationMinutes, setDurationMinutes] = useState(120);
   const [description, setDescription] = useState('');
   const [isScheduled, setIsScheduled] = useState(false);
@@ -52,7 +56,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   useEffect(() => {
     if (taskToEdit) {
       setTitle(taskToEdit.title || '');
-      setCategory(taskToEdit.category || categories[0]?.name || 'DSA');
+      setCategory(taskToEdit.category || safeCategories[0]?.name || 'DSA');
       setDurationMinutes(taskToEdit.durationMinutes || 60);
       setDescription(taskToEdit.description || '');
       setIsScheduled(taskToEdit.dayOfWeek !== undefined && taskToEdit.startTime !== undefined);
@@ -60,14 +64,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setStartTime(taskToEdit.startTime ?? defaultStartTime);
     } else {
       setTitle('');
-      setCategory(categories[0]?.name || 'DSA');
+      setCategory(safeCategories[0]?.name || 'DSA');
       setDurationMinutes(120);
       setDescription('');
       setIsScheduled(false);
       setDayOfWeek(defaultDayIndex);
       setStartTime(defaultStartTime);
     }
-  }, [taskToEdit, isOpen, defaultDayIndex, defaultStartTime, categories]);
+  }, [taskToEdit, isOpen, defaultDayIndex, defaultStartTime, safeCategories]);
 
   if (!isOpen) return null;
 
@@ -153,7 +157,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </div>
 
             <div className="category-selector-grid">
-              {categories.map((cat) => {
+              {safeCategories.map((cat) => {
                 const isSelected = category === cat.name;
 
                 return (

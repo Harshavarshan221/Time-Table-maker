@@ -138,11 +138,12 @@ export function saveUnscheduledTasks(tasks: Task[]): void {
 export function loadCategories(): CategoryConfig[] {
   try {
     const raw = localStorage.getItem(CATEGORIES_KEY);
-    if (!raw) {
-      saveCategories(DEFAULT_CATEGORIES);
-      return DEFAULT_CATEGORIES;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-    return JSON.parse(raw);
+    saveCategories(DEFAULT_CATEGORIES);
+    return DEFAULT_CATEGORIES;
   } catch (e) {
     console.error('Failed to load categories from storage', e);
     return DEFAULT_CATEGORIES;
@@ -202,7 +203,10 @@ export function saveUserUnscheduledTasks(uid: string, tasks: Task[]): void {
 export function loadUserCategories(uid: string): CategoryConfig[] {
   try {
     const raw = localStorage.getItem(`timetable_user_categories_${uid}`);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
   } catch (e) {
     console.error('Failed to load user categories:', e);
   }
