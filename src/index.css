@@ -215,17 +215,24 @@ body {
 .week-selector-container {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .week-nav-group {
   display: flex;
   align-items: center;
-  background-color: var(--bg-app);
-  padding: 4px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
   gap: 4px;
+  background: linear-gradient(135deg, #FFFFFF 0%, #EFF6FF 100%);
+  padding: 4px 8px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid #BFDBFE;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.12);
+  transition: all 0.2s ease;
+}
+
+.week-nav-group:hover {
+  border-color: #93C5FD;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.18);
 }
 
 .btn-nav {
@@ -233,36 +240,47 @@ body {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-weight: 600;
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-nav:hover {
-  background-color: #FFFFFF;
-  color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+  transform: translateY(-1px);
 }
 
 .week-display-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  color: #FFFFFF;
+  border-radius: 20px;
   font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25); }
+  50% { box-shadow: 0 4px 16px rgba(37, 99, 235, 0.45); }
 }
 
 .icon-badge {
   width: 16px;
   height: 16px;
-  color: var(--primary);
+  color: #FFFFFF;
 }
 
 .week-actions-group {
@@ -276,21 +294,24 @@ body {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background-color: #FFFFFF;
-  border: 1px solid var(--border-light);
+  background: linear-gradient(135deg, #FFFFFF 0%, #F0FDF4 100%);
+  border: 1.5px solid #A7F3D0;
   border-radius: var(--radius-md);
   font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: #059669;
   cursor: pointer;
   transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
 }
 
 .btn-today:hover,
 .btn-today.active {
-  background-color: var(--primary-light);
-  border-color: #93C5FD;
-  color: var(--primary);
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  border-color: #059669;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
 .date-picker-wrapper {
@@ -302,14 +323,15 @@ body {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background-color: #FFFFFF;
-  border: 1px solid var(--border-light);
+  background: linear-gradient(135deg, #FFFFFF 0%, #EFF6FF 100%);
+  border: 1.5px solid #93C5FD;
   border-radius: var(--radius-md);
   font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: var(--primary);
   cursor: pointer;
   transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);
 }
 
 .btn-date-picker:hover {
