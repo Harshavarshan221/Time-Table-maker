@@ -26,6 +26,8 @@ import {
   saveUserScheduledTasks,
   loadUserUnscheduledTasks,
   saveUserUnscheduledTasks,
+  loadUserCategories,
+  saveUserCategories,
 } from './utils/storage';
 import {
   subscribeToWeekTasks,
@@ -109,7 +111,7 @@ export const App: React.FC = () => {
 
       setAllScheduledTasks(cachedScheduled);
       setUnscheduledTasks(cachedUnscheduled);
-      setCategories(loadCategories());
+      setCategories(loadUserCategories(currentUser.uid));
     } else {
       setAllScheduledTasks(loadAllScheduledTasks());
       setUnscheduledTasks(loadUnscheduledTasks());
@@ -150,7 +152,10 @@ export const App: React.FC = () => {
     const unsubCategories = subscribeToCategories(
       currentUser.uid,
       (cats) => {
-        if (cats.length > 0) setCategories(cats);
+        if (cats.length > 0) {
+          setCategories(cats);
+          saveUserCategories(currentUser.uid, cats);
+        }
       }
     );
 
@@ -188,6 +193,7 @@ export const App: React.FC = () => {
   const handleSaveCategories = (newCategories: CategoryConfig[]) => {
     setCategories(newCategories);
     if (currentUser) {
+      saveUserCategories(currentUser.uid, newCategories);
       saveCategoriesToFirestore(currentUser.uid, newCategories);
     } else {
       saveCategories(newCategories);

@@ -3,6 +3,7 @@ import {
   doc,
   setDoc,
   deleteDoc,
+  getDocs,
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -155,7 +156,6 @@ export function subscribeToCategories(
   return onSnapshot(
     catRef,
     (snapshot) => {
-      if (snapshot.empty) return;
       const categories: CategoryConfig[] = snapshot.docs.map((docSnap) => {
         const data = docSnap.data();
         return {
@@ -175,14 +175,28 @@ export function subscribeToCategories(
 }
 
 /**
- * Save all categories to Cloud Firestore.
+ * Save all categories to Cloud Firestore and sync removals.
  */
 export async function saveCategoriesToFirestore(
   userId: string,
   categories: CategoryConfig[]
 ): Promise<void> {
+  const catRef = collection(db, 'users', userId, 'categories');
+  const validIds = new Set(categories.map((c) => c.id));
+
   for (const cat of categories) {
     const catDocRef = doc(db, 'users', userId, 'categories', cat.id);
     await setDoc(catDocRef, cat, { merge: true });
+  }
+
+  try {
+    const snapshot = await getDocs(catRef);
+    for (const docSnap of snapshot.docs) {
+      if (!validIds.has(docSnap.id)) {
+        await deleteDoc(docSnap.ref);
+      }
+    }
+  } catch (e) {
+    console.warn('Notice removing deleted categories:', e);
   }
 }

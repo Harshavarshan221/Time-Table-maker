@@ -199,3 +199,21 @@ export function saveUserUnscheduledTasks(uid: string, tasks: Task[]): void {
   }
 }
 
+export function loadUserCategories(uid: string): CategoryConfig[] {
+  try {
+    const raw = localStorage.getItem(`timetable_user_categories_${uid}`);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to load user categories:', e);
+  }
+  return DEFAULT_CATEGORIES;
+}
+
+export function saveUserCategories(uid: string, categories: CategoryConfig[]): void {
+  try {
+    localStorage.setItem(`timetable_user_categories_${uid}`, JSON.stringify(categories));
+  } catch (e) {
+    console.error('Failed to save user categories:', e);
+  }
+}
+
