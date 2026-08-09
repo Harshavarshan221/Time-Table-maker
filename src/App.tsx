@@ -147,28 +147,36 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    // 1. Subscribe to Current Week Tasks
+    // 1. Subscribe to Current Week Tasks (Non-destructive Map merge)
     const unsubWeek = subscribeToWeekTasks(
       currentUser.uid,
       currentWeekInfo.weekId,
       (tasks) => {
         const userTasks = tasks.filter((t) => !isSampleTask(t));
         setAllScheduledTasks((prev) => {
-          const otherWeeks = prev.filter((t) => t.weekId !== currentWeekInfo.weekId && !isSampleTask(t));
-          const combined = [...otherWeeks, ...userTasks];
+          const map = new Map<string, Task>();
+          prev.forEach((t) => !isSampleTask(t) && map.set(t.id, t));
+          userTasks.forEach((t) => map.set(t.id, t));
+          const combined = Array.from(map.values());
           saveUserScheduledTasks(currentUser.uid, combined);
           return combined;
         });
       }
     );
 
-    // 2. Subscribe to Unscheduled Tasks
+    // 2. Subscribe to Unscheduled Tasks (Non-destructive Map merge)
     const unsubUnscheduled = subscribeToUnscheduledTasks(
       currentUser.uid,
       (tasks) => {
         const userTasks = tasks.filter((t) => !isSampleTask(t));
-        setUnscheduledTasks(userTasks);
-        saveUserUnscheduledTasks(currentUser.uid, userTasks);
+        setUnscheduledTasks((prev) => {
+          const map = new Map<string, Task>();
+          prev.forEach((t) => !isSampleTask(t) && map.set(t.id, t));
+          userTasks.forEach((t) => map.set(t.id, t));
+          const combined = Array.from(map.values());
+          saveUserUnscheduledTasks(currentUser.uid, combined);
+          return combined;
+        });
       }
     );
 
