@@ -82,10 +82,10 @@ export const HomePage: React.FC<HomePageProps> = ({
   const progressPercentage =
     totalTasks > 0 ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 0;
 
-  const fetchAIContent = (emotionId: EmotionId) => {
+  const fetchAIContent = (emotionId: EmotionId, forceRefresh: boolean = false) => {
     setIsLoadingAI(true);
     const taskTitles = todayTasks.map((t) => t.title);
-    generateAIMoodContent(emotionId, userName, taskTitles).then((res) => {
+    generateAIMoodContent(emotionId, userName, taskTitles, forceRefresh).then((res) => {
       setAiContent(res);
       setIsLoadingAI(false);
     });
@@ -206,7 +206,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <button
                   type="button"
                   className="btn-regen-sm"
-                  onClick={() => fetchAIContent(currentEmotionId)}
+                  onClick={() => fetchAIContent(currentEmotionId, true)}
                   disabled={isLoadingAI}
                   title="Generate another vibe"
                 >
