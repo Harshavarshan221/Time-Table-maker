@@ -11,6 +11,7 @@ import {
   Bot,
   Layers,
   History,
+  Lock,
 } from 'lucide-react';
 import type { Task, CategoryConfig } from '../types/timetable';
 import { getEmotionConfig, type EmotionId, EMOTIONS } from '../constants/emotions';
@@ -22,6 +23,12 @@ import {
 } from '../services/aiMoodService';
 import { EmotionCheckInModal } from './EmotionCheckInModal';
 import { formatTimeRange, formatDurationLabel } from '../utils/dateUtils';
+import {
+  attemptRequest,
+  checkRateLimitStatus,
+  formatCountdown,
+  SATIRE_MESSAGES,
+} from '../utils/aiRateLimiter';
 import type { User } from 'firebase/auth';
 
 interface HomePageProps {
@@ -60,6 +67,10 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [aiMotivation, setAiMotivation] = useState<AIMotivationResponse | null>(null);
   const [isLoadingMotivation, setIsLoadingMotivation] = useState(false);
 
+  // Rate Limiting & Satire state
+  const [rateLimitStatus, setRateLimitStatus] = useState(() => checkRateLimitStatus());
+  const [satireMessage, setSatireMessage] = useState<string | null>(null);
+
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Friend';
   const emotionConfig = currentEmotionId ? getEmotionConfig(currentEmotionId) : null;
 
@@ -93,7 +104,22 @@ export const HomePage: React.FC<HomePageProps> = ({
   // Extract task categories, avoiding reliance on "Untitled Task"
   const taskCategories = todayTasks.map((t) => t.category);
 
-  // Independent Meme Refresh
+  // 1-second interval effect for live countdown timer & status sync
+  useEffect(() => {
+    const updateStatus = () => {
+      const status = checkRateLimitStatus();
+      setRateLimitStatus(status);
+      if (!status.isCoolingDown) {
+        setSatireMessage(null);
+      }
+    };
+
+    updateStatus();
+    const interval = setInterval(updateStatus, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Independent Meme Fetch
   const fetchMeme = (emotionId: EmotionId, forceRefresh: boolean = false) => {
     setIsLoadingMeme(true);
     generateAIMeme(emotionId, userName, taskCategories, forceRefresh).then((res) => {
@@ -102,13 +128,49 @@ export const HomePage: React.FC<HomePageProps> = ({
     });
   };
 
-  // Independent Motivation Refresh
+  // Independent Motivation Fetch
   const fetchMotivation = (emotionId: EmotionId, forceRefresh: boolean = false) => {
     setIsLoadingMotivation(true);
     generateAIMotivation(emotionId, userName, taskCategories, forceRefresh).then((res) => {
       setAiMotivation(res);
       setIsLoadingMotivation(false);
     });
+  };
+
+  // User Meme Refresh Action (Rate-Limit Protected)
+  const handleUserMemeRefresh = () => {
+    if (!currentEmotionId) return;
+    const attempt = attemptRequest();
+
+    if (!attempt.allowed) {
+      setSatireMessage(attempt.satireMessage || SATIRE_MESSAGES[0]);
+      setRateLimitStatus({
+        isCoolingDown: true,
+        secondsRemaining: attempt.secondsRemaining,
+        currentCount: 10,
+      });
+      return;
+    }
+
+    fetchMeme(currentEmotionId, true);
+  };
+
+  // User Motivation Refresh Action (Rate-Limit Protected)
+  const handleUserMotivationRefresh = () => {
+    if (!currentEmotionId) return;
+    const attempt = attemptRequest();
+
+    if (!attempt.allowed) {
+      setSatireMessage(attempt.satireMessage || SATIRE_MESSAGES[0]);
+      setRateLimitStatus({
+        isCoolingDown: true,
+        secondsRemaining: attempt.secondsRemaining,
+        currentCount: 10,
+      });
+      return;
+    }
+
+    fetchMotivation(currentEmotionId, true);
   };
 
   // Generate AI Content whenever emotion or user changes
@@ -219,26 +281,43 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* 3. AI MEME & MOTIVATION SECTION (If mood is selected) */}
       {emotionConfig && (
         <section className="home-section ai-vibe-grid">
-          {/* AI MEME CARD (Independent Reload Button) */}
+          {/* AI MEME CARD */}
           <div className="ai-card meme-card">
             <div className="card-badge-header">
               <span className="badge-pill meme-pill">
                 <Bot className="icon-nano" /> YOUR DAILY VIBE
               </span>
               <div className="flex-align-center gap-2">
-                <button
-                  type="button"
-                  className="btn-regen-sm"
-                  onClick={() => fetchMeme(currentEmotionId, true)}
-                  disabled={isLoadingMeme}
-                  title="Generate another meme"
-                >
-                  <RefreshCw className={`icon-nano ${isLoadingMeme ? 'spin-icon' : ''}`} />
-                </button>
+                {rateLimitStatus.isCoolingDown ? (
+                  <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
+                    <Lock className="icon-nano" />
+                    <span>{formatCountdown(rateLimitStatus.secondsRemaining)}</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-regen-sm"
+                    onClick={handleUserMemeRefresh}
+                    disabled={isLoadingMeme}
+                    title="Generate another meme"
+                  >
+                    <RefreshCw className={`icon-nano ${isLoadingMeme ? 'spin-icon' : ''}`} />
+                  </button>
+                )}
               </div>
             </div>
 
-            {isLoadingMeme ? (
+            {rateLimitStatus.isCoolingDown ? (
+              <div className="cooldown-satire-box">
+                <div className="satire-badge">😭 QUOTE OVERLOAD</div>
+                <p className="satire-quote-text">
+                  "{satireMessage || SATIRE_MESSAGES[0]}"
+                </p>
+                <span className="satire-timer-sub">
+                  Cooldown active — Available in {formatCountdown(rateLimitStatus.secondsRemaining)}
+                </span>
+              </div>
+            ) : isLoadingMeme ? (
               <div className="ai-loading-placeholder">
                 <RefreshCw className="icon-sm spin-icon text-primary" />
                 <span>Generating custom meme vibe...</span>
@@ -254,26 +333,43 @@ export const HomePage: React.FC<HomePageProps> = ({
             ) : null}
           </div>
 
-          {/* AI MOTIVATION CARD (Independent Reload Button) */}
+          {/* AI MOTIVATION CARD */}
           <div className="ai-card motivation-card">
             <div className="card-badge-header">
               <span className="badge-pill motivation-pill">
                 <Flame className="icon-nano" /> A LITTLE PUSH 🚀
               </span>
               <div className="flex-align-center gap-2">
-                <button
-                  type="button"
-                  className="btn-regen-sm"
-                  onClick={() => fetchMotivation(currentEmotionId, true)}
-                  disabled={isLoadingMotivation}
-                  title="Generate another motivation quote"
-                >
-                  <RefreshCw className={`icon-nano ${isLoadingMotivation ? 'spin-icon' : ''}`} />
-                </button>
+                {rateLimitStatus.isCoolingDown ? (
+                  <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
+                    <Lock className="icon-nano" />
+                    <span>{formatCountdown(rateLimitStatus.secondsRemaining)}</span>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-regen-sm"
+                    onClick={handleUserMotivationRefresh}
+                    disabled={isLoadingMotivation}
+                    title="Generate another motivation quote"
+                  >
+                    <RefreshCw className={`icon-nano ${isLoadingMotivation ? 'spin-icon' : ''}`} />
+                  </button>
+                )}
               </div>
             </div>
 
-            {isLoadingMotivation ? (
+            {rateLimitStatus.isCoolingDown ? (
+              <div className="cooldown-satire-box satire-motivation">
+                <div className="satire-badge">🔒 QUOTE BREAK</div>
+                <p className="satire-quote-text">
+                  "Okay, productivity warrior. 😭 Go work for a bit. The next 25 minutes of work will accomplish more than 10 quotes!"
+                </p>
+                <span className="satire-timer-sub">
+                  Unlocks in {formatCountdown(rateLimitStatus.secondsRemaining)}
+                </span>
+              </div>
+            ) : isLoadingMotivation ? (
               <div className="ai-loading-placeholder">
                 <RefreshCw className="icon-sm spin-icon text-primary" />
                 <span>Getting your motivation ready...</span>

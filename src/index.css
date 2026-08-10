@@ -2859,6 +2859,70 @@ body {
   border-radius: 999px;
 }
 
+/* Rate Limit Cooldown & Satire Styling */
+.cooldown-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background-color: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-family: monospace;
+}
+
+.cooldown-satire-box {
+  background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
+  border: 1px dashed #FDA4AF;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.cooldown-satire-box.satire-motivation {
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  border: 1px dashed #FCD34D;
+}
+
+.satire-badge {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #E11D48;
+  background-color: #FFFFFF;
+  padding: 3px 10px;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.satire-quote-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #9F1239;
+  line-height: 1.45;
+  margin: 0;
+  font-style: italic;
+}
+
+.satire-motivation .satire-quote-text {
+  color: #92400E;
+}
+
+.satire-timer-sub {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #BE123C;
+  font-family: monospace;
+}
+
 .ai-loading-placeholder {
   display: flex;
   align-items: center;
