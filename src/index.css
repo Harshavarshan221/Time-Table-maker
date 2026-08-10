@@ -2594,3 +2594,677 @@ body {
   font-weight: 600;
   margin-top: 4px;
 }
+/* ==========================================================================
+   HOME PAGE & DAILY EMOTION AI STYLES
+   ========================================================================== */
+.home-page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 1. HERO GREETING BANNER */
+.home-hero-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 60%, #EEF2FF 100%);
+  border: 1px solid #BFDBFE;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.06);
+}
+
+.greeting-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background-color: #DBEAFE;
+  border: 1px solid #93C5FD;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1D4ED8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 8px;
+}
+
+.hero-greeting-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.hero-greeting-title .highlight-name {
+  background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-greeting-sub {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0;
+}
+
+.hero-date-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 2. DAILY MOOD SECTION */
+.current-mood-card {
+  padding: 20px 24px;
+  border: 1.5px solid;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.mood-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.mood-badge-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.btn-change-mood {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-change-mood:hover {
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+}
+
+.mood-display-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mood-emoji-display {
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.mood-title-text {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.mood-tagline {
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Inline Check-in Banner */
+.inline-checkin-banner {
+  padding: 24px;
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+  border: 1.5px dashed #93C5FD;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.checkin-banner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.checkin-banner-title h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.checkin-banner-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.inline-emotion-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  gap: 10px;
+}
+
+.inline-chip-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1.5px solid;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.inline-chip-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chip-emoji {
+  font-size: 1.25rem;
+}
+
+.chip-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+/* 3. AI VIBE GRID (MEME & MOTIVATION) */
+.ai-vibe-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.ai-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-badge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.meme-pill {
+  background-color: #F3E8FF;
+  color: #7E22CE;
+  border: 1px solid #D8B4FE;
+}
+
+.motivation-pill {
+  background-color: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.ai-sparkle-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: #EFF6FF;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.ai-loading-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 30px 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.meme-content-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%);
+  border: 1px solid #E9D5FF;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  flex: 1;
+}
+
+.meme-emoji-hero {
+  font-size: 2.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.meme-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meme-setup {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #4C1D95;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.meme-punchline {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #581C87;
+  line-height: 1.35;
+}
+
+.motivation-content-box {
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  border: 1px solid #FDE68A;
+  border-radius: var(--radius-md);
+  padding: 18px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.motivation-quote {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #78350F;
+  line-height: 1.45;
+  margin: 0;
+  font-style: italic;
+}
+
+/* 4. TODAY'S MISSIONS & SCHEDULE SUMMARY */
+.schedule-summary-section {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.section-count-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: #EFF6FF;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #BFDBFE;
+}
+
+.btn-link-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.btn-link-action:hover {
+  color: #1D4ED8;
+  text-decoration: underline;
+}
+
+/* Progress Card */
+.progress-card {
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.progress-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.progress-title {
+  color: var(--text-secondary);
+}
+
+.progress-percentage {
+  color: var(--primary);
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background-color: #E2E8F0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* Compact Tasks List */
+.compact-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.compact-task-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-light);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.compact-task-item:hover {
+  background-color: #FFFFFF;
+  box-shadow: var(--shadow-sm);
+  transform: translateX(2px);
+}
+
+.item-time-col {
+  display: flex;
+  flex-direction: column;
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.time-text {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.duration-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.item-info-col {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.category-pill-nano {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border: 1px solid;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.compact-task-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.empty-schedule-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  text-align: center;
+  background-color: var(--bg-app);
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+.empty-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.empty-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.empty-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* 5. QUICK ACTIONS GRID */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.action-card-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+}
+
+.action-card-btn:hover {
+  border-color: #93C5FD;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.action-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.icon-bg-blue {
+  background-color: #EFF6FF;
+  color: #2563EB;
+}
+
+.icon-bg-green {
+  background-color: #ECFDF5;
+  color: #10B981;
+}
+
+.icon-bg-purple {
+  background-color: #F5F3FF;
+  color: #8B5CF6;
+}
+
+.icon-bg-amber {
+  background-color: #FFFBEB;
+  color: #D97706;
+}
+
+.action-text-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.action-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.action-sub {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* EMOTION CHECK-IN MODAL STYLES */
+.emotion-checkin-modal {
+  max-width: 540px !important;
+}
+
+.emotion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.emotion-card-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 10px;
+  border: 1.5px solid;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.emotion-card-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.emotion-card-btn.selected {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.emotion-emoji-lg {
+  font-size: 1.85rem;
+  line-height: 1;
+}
+
+.emotion-label-text {
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+/* RESPONSIVE LAYOUT ADJUSTMENTS */
+@media (max-width: 768px) {
+  .ai-vibe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .compact-task-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .item-time-col {
+    width: auto;
+  }
+}

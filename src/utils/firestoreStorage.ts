@@ -224,3 +224,32 @@ export function subscribeToGridSettings(
     }
   });
 }
+
+/**
+ * Save daily emotion to Cloud Firestore.
+ */
+export async function saveEmotionToFirestore(
+  userId: string,
+  dateStr: string,
+  emotionId: string
+): Promise<void> {
+  const emotionDocRef = doc(db, 'users', userId, 'dailyEmotions', dateStr);
+  await setDoc(emotionDocRef, { dateStr, emotionId, timestamp: Date.now() }, { merge: true });
+}
+
+/**
+ * Subscribe to daily emotions from Cloud Firestore.
+ */
+export function subscribeToDailyEmotions(
+  userId: string,
+  onEmotionsUpdate: (emotionsMap: Record<string, any>) => void
+): () => void {
+  const colRef = collection(db, 'users', userId, 'dailyEmotions');
+  return onSnapshot(colRef, (snapshot) => {
+    const emotionsMap: Record<string, any> = {};
+    snapshot.docs.forEach((docSnap) => {
+      emotionsMap[docSnap.id] = docSnap.data();
+    });
+    onEmotionsUpdate(emotionsMap);
+  });
+}

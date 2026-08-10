@@ -46,12 +46,18 @@ import {
   deleteCategoryFromFirestore,
   saveGridSettingsToFirestore,
   subscribeToGridSettings,
+  saveEmotionToFirestore,
+  subscribeToDailyEmotions,
 } from './utils/firestoreStorage';
 import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, History, RotateCcw, X, Bell } from 'lucide-react';
 import { TrashHistoryModal } from './components/TrashHistoryModal';
 import type { DeletedTaskRecord } from './components/TrashHistoryModal';
 
 import { TodayTasksModal } from './components/TodayTasksModal';
+import { HomePage } from './components/HomePage';
+import type { EmotionId } from './constants/emotions';
+import { loadDailyEmotions, saveEmotionForDate } from './utils/emotionStorage';
+import { toISODateString } from './utils/dateUtils';
 import {
   getTodayTasks,
   sendDesktopNotification,
@@ -63,9 +69,12 @@ export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // View mode & Sidebar toggle state
-  const [activeView, setActiveView] = useState<AppView>('grid');
+  // View mode & Sidebar toggle state (Default to Home Page!)
+  const [activeView, setActiveView] = useState<AppView>('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Daily Emotions state per date (YYYY-MM-DD -> emotionId)
+  const [dailyEmotionsMap, setDailyEmotionsMap] = useState<Record<string, EmotionId>>({});
 
   // Grid Settings state (hours & spacing)
   const [gridSettings, setGridSettings] = useState<GridSettings>(() => {
@@ -182,6 +191,13 @@ export const App: React.FC = () => {
       saveUserCategories(currentUser.uid, safeCats);
       saveCategoriesToFirestore(currentUser.uid, safeCats);
       setDeletedTasksHistory(loadUserTrashHistory(currentUser.uid));
+
+      const emotions = loadDailyEmotions(currentUser.uid);
+      const mappedEmotions: Record<string, EmotionId> = {};
+      Object.entries(emotions).forEach(([d, entry]) => {
+        if (entry?.emotionId) mappedEmotions[d] = entry.emotionId;
+      });
+      setDailyEmotionsMap(mappedEmotions);
     } else {
       setAllScheduledTasks(loadAllScheduledTasks());
       setUnscheduledTasks(loadUnscheduledTasks());
@@ -192,6 +208,13 @@ export const App: React.FC = () => {
       } catch (e) {
         setDeletedTasksHistory([]);
       }
+
+      const emotions = loadDailyEmotions();
+      const mappedEmotions: Record<string, EmotionId> = {};
+      Object.entries(emotions).forEach(([d, entry]) => {
+        if (entry?.emotionId) mappedEmotions[d] = entry.emotionId;
+      });
+      setDailyEmotionsMap(mappedEmotions);
     }
   }, [currentUser, isAuthInitializing]);
 
@@ -269,13 +292,35 @@ export const App: React.FC = () => {
       }
     );
 
+    // 5. Subscribe to Daily Emotions
+    const unsubEmotions = subscribeToDailyEmotions(currentUser.uid, (emotionsMap) => {
+      if (emotionsMap) {
+        const mapped: Record<string, EmotionId> = {};
+        Object.entries(emotionsMap).forEach(([dateKey, val]) => {
+          if (val?.emotionId) mapped[dateKey] = val.emotionId;
+        });
+        setDailyEmotionsMap((prev) => ({ ...prev, ...mapped }));
+      }
+    });
+
     return () => {
       unsubWeek();
       unsubUnscheduled();
       unsubCategories();
       unsubGridSettings();
+      unsubEmotions();
     };
   }, [currentUser, currentWeekInfo.weekId]);
+
+  // Handle emotion selection per date
+  const handleSelectEmotion = (emotionId: EmotionId) => {
+    const todayIso = toISODateString(selectedDate);
+    saveEmotionForDate(todayIso, emotionId, currentUser?.uid);
+    setDailyEmotionsMap((prev) => ({ ...prev, [todayIso]: emotionId }));
+    if (currentUser) {
+      saveEmotionToFirestore(currentUser.uid, todayIso, emotionId);
+    }
+  };
 
   // Sync & Load per-week independent grid settings when week or user changes
   useEffect(() => {
@@ -749,6 +794,23 @@ export const App: React.FC = () => {
       </header>
 
       {/* Main Content View */}
+      {activeView === 'home' && (
+        <HomePage
+          currentUser={currentUser}
+          selectedDate={selectedDate}
+          todayTasks={todayTasks}
+          allScheduledTasks={allScheduledTasks}
+          categories={categories}
+          currentEmotionId={dailyEmotionsMap[toISODateString(selectedDate)] || null}
+          onSelectEmotion={handleSelectEmotion}
+          onNavigateToGrid={() => setActiveView('grid')}
+          onNavigateToAnalytics={() => setActiveView('analytics')}
+          onOpenCreateTaskModal={handleOpenCreateModal}
+          onOpenTrashModal={() => setIsTrashModalOpen(true)}
+          onEditTask={handleOpenEditModal}
+        />
+      )}
+
       {activeView === 'grid' && (
         <div className={`main-layout ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
           {isSidebarOpen ? (

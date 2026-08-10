@@ -1,7 +1,7 @@
 import React from 'react';
-import { Calendar, BarChart2 } from 'lucide-react';
+import { Home, Calendar, BarChart2 } from 'lucide-react';
 
-export type AppView = 'grid' | 'analytics';
+export type AppView = 'home' | 'grid' | 'analytics';
 
 interface ViewSwitcherProps {
   activeView: AppView;
@@ -14,6 +14,15 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
 }) => {
   return (
     <div className="view-switcher-tabs">
+      <button
+        className={`view-tab-btn ${activeView === 'home' ? 'active' : ''}`}
+        onClick={() => onViewChange('home')}
+        title="Go to Home Dashboard"
+      >
+        <Home className="icon-xs" />
+        <span>Home</span>
+      </button>
+
       <button
         className={`view-tab-btn ${activeView === 'grid' ? 'active' : ''}`}
         onClick={() => onViewChange('grid')}
@@ -29,7 +38,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
         title="View Productivity Analytics"
       >
         <BarChart2 className="icon-xs" />
-        <span>Analytics (Weekly / Monthly)</span>
+        <span>Analytics</span>
       </button>
     </div>
   );
