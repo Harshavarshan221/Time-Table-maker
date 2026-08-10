@@ -50,15 +50,18 @@ export async function generateAIMoodContent(
         ? `Today's scheduled tasks: ${todayTaskTitles.join(', ')}.`
         : 'No tasks scheduled yet today.';
 
-    const prompt = `You are a playful, witty, Duolingo-style productivity AI companion.
-User Name: ${userDisplayName || 'Friend'}
+    const timestampSeed = Date.now();
+
+    const prompt = `You are a hilarious, witty, Duolingo-style student productivity AI companion.
+User Name: ${userDisplayName || 'Student'}
 Current Emotion: "${config.label}" (${config.emoji})
 ${tasksSummary}
+Random Seed: ${timestampSeed}
 
-Generate a hilarious, highly relatable meme text and a short motivational boost.
+Generate a brand-new, hilarious, highly relatable college/student meme text and a short motivational boost.
 Requirements:
 1. "meme": an object with:
-   - "setup": (1 short relatable scenario sentence)
+   - "setup": (1 short relatable student scenario e.g. LeetCode, DSA, assignments, coffee, 3 AM study, playlists, Chrome tabs)
    - "punchline": (1 funny punchline sentence)
    - "emoji": (1 fitting emoji)
 2. "motivation": (1-2 inspiring sentences tailored to their emotion and tasks. Keep it friendly, witty, and concise!)
@@ -80,7 +83,10 @@ Return ONLY valid raw JSON in this exact structure:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: 1.0,
+          },
         }),
       }
     );
@@ -115,9 +121,11 @@ Return ONLY valid raw JSON in this exact structure:
 
 function getFallbackContent(emotionId: EmotionId): AIMoodResponse {
   const config = getEmotionConfig(emotionId);
-  const randomIndex = Math.floor(Math.random() * config.fallbackMemes.length);
-  const meme = config.fallbackMemes[randomIndex] || config.fallbackMemes[0];
-  const motivation = config.fallbackMotivations[randomIndex] || config.fallbackMotivations[0];
+  const memeIndex = Math.floor(Math.random() * config.fallbackMemes.length);
+  const motivationIndex = Math.floor(Math.random() * config.fallbackMotivations.length);
+
+  const meme = config.fallbackMemes[memeIndex] || config.fallbackMemes[0];
+  const motivation = config.fallbackMotivations[motivationIndex] || config.fallbackMotivations[0];
 
   return {
     meme,
