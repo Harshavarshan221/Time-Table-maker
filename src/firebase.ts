@@ -8,12 +8,12 @@ const getEnvVar = (val?: string) => {
 };
 
 const firebaseConfig = {
-  apiKey: getEnvVar(import.meta.env.VITE_FIREBASE_API_KEY) || "AIzaSyDemoPlaceholderKeyForTimeTableApp",
-  authDomain: getEnvVar(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || "time-table-maker.firebaseapp.com",
-  projectId: getEnvVar(import.meta.env.VITE_FIREBASE_PROJECT_ID) || "time-table-maker",
-  storageBucket: getEnvVar(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || "time-table-maker.appspot.com",
-  messagingSenderId: getEnvVar(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) || "123456789012",
-  appId: getEnvVar(import.meta.env.VITE_FIREBASE_APP_ID) || "1:123456789012:web:demo1234567890",
+  apiKey: getEnvVar(import.meta.env.VITE_FIREBASE_API_KEY) || "",
+  authDomain: getEnvVar(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || "my-tt-f0b15.firebaseapp.com",
+  projectId: getEnvVar(import.meta.env.VITE_FIREBASE_PROJECT_ID) || "my-tt-f0b15",
+  storageBucket: getEnvVar(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || "my-tt-f0b15.appspot.com",
+  messagingSenderId: getEnvVar(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) || "",
+  appId: getEnvVar(import.meta.env.VITE_FIREBASE_APP_ID) || "",
 };
 
 // Initialize Firebase App singleton

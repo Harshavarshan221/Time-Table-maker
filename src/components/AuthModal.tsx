@@ -26,6 +26,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setErrorMessage(null);
     setIsLoading(true);
     try {
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, googleProvider);
       onClose();
     } catch (err: any) {
@@ -34,21 +35,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
       if (err.code === 'auth/popup-closed-by-user') {
         msg = 'Sign-In popup was closed before completing.';
-      } else if (err.code === 'auth/popup-blocked') {
-        msg = 'Pop-up window was blocked by your browser. Please enable popups or try Email Sign-In.';
-      } else if (err.code === 'auth/api-key-not-valid' || err.message?.includes('api-key-not-valid')) {
-        msg = 'Invalid Firebase API key. Please check your Firebase settings in Vercel / .env.local.';
-      } else if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
-        msg = 'Domain not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains.';
-      } else if (err.code === 'auth/operation-not-allowed') {
-        msg = 'Google Sign-In is disabled in Firebase Console -> Authentication -> Sign-in method.';
-      } else if (err.message?.includes('Database is closing') || err.message?.includes('closing') || err.message?.includes('hidden')) {
+      } else if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
         try {
           await signInWithRedirect(auth, googleProvider);
           return;
         } catch (redirectErr) {
-          msg = 'Connection interrupted. Please try Email Sign-In or reload.';
+          msg = 'Pop-up window was blocked by your browser. Please allow popups or try Email Sign-In.';
         }
+      } else if (err.code === 'auth/api-key-not-valid' || err.message?.includes('api-key-not-valid')) {
+        msg = 'Invalid Firebase API key. Please check your Firebase settings in .env.local.';
+      } else if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+        msg = 'Domain not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains (add my-tt-f0b15.web.app).';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        msg = 'Google Sign-In is disabled in Firebase Console -> Authentication -> Sign-in method -> Google (Click Enable).';
       } else if (err.message) {
         msg = err.message;
       }
