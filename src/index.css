@@ -2979,8 +2979,19 @@ body {
   line-height: 1.35;
 }
 
+.custom-vibe-focus-reminder.danger-style {
+  background: linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%);
+  border: 1px solid #FCA5A5;
+  color: #991B1B;
+}
+
 .text-amber-icon {
   color: #D97706;
+  flex-shrink: 0;
+}
+
+.text-danger-icon {
+  color: #DC2626;
   flex-shrink: 0;
 }
 
