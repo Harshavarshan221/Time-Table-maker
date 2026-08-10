@@ -2965,6 +2965,25 @@ body {
 }
 
 /* AI Style Selector Modal Controls */
+.custom-vibe-focus-reminder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 20px 12px 20px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%);
+  border: 1px solid #FCD34D;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  color: #92400E;
+  line-height: 1.35;
+}
+
+.text-amber-icon {
+  color: #D97706;
+  flex-shrink: 0;
+}
+
 .ai-style-tabs {
   display: flex;
   border-bottom: 1px solid var(--border-light);

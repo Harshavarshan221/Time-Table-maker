@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Sliders, Check } from 'lucide-react';
+import { X, Sparkles, Sliders, Check, Zap } from 'lucide-react';
 import {
   MEME_STYLES,
   MOTIVATION_STYLES,
@@ -65,6 +65,12 @@ export const AIStyleSelectorModal: React.FC<AIStyleSelectorModalProps> = ({
           <button type="button" className="btn-modal-close" onClick={onClose}>
             <X className="icon-xs" />
           </button>
+        </div>
+
+        {/* Focus Reminder Banner */}
+        <div className="custom-vibe-focus-reminder">
+          <Zap className="icon-nano text-amber-icon" />
+          <span><strong>Quick Tip:</strong> Don't spend too much time customizing—pick a quick vibe, save, and jump back into your tasks! ⏱️🔥</span>
         </div>
 
         {/* Section Tabs */}
