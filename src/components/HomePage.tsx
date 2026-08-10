@@ -218,16 +218,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="hero-right-actions">
-          <button
-            type="button"
-            className="btn-vibe-style-toggle"
-            onClick={() => setIsCustomVibeModalOpen(true)}
-            title="Customize AI Quote Style & Prompts"
-          >
-            <Sliders className="icon-xs" />
-            <span>{customVibeStyle ? 'Vibe Style: Custom' : 'Customize AI Tone'}</span>
-          </button>
-
           <div className="hero-date-badge">
             <Calendar className="icon-xs" />
             <span>{dateFormatted}</span>
