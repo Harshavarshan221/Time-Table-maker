@@ -110,15 +110,17 @@ export async function generateAIMeme(
 
       const prompt = `You are a creative student productivity AI meme companion.
 User Name: ${userDisplayName || 'Student'}
-Current Emotion: "${config.label}" (${config.emoji})
+CURRENT EMOTION (PRIMARY DIRECTION): "${config.label}" (${config.emoji}) - Tagline: "${config.vibeTagline}"
 Scheduled Task Categories Today: ${categoriesText}
 Random Seed: ${timestampSeed}
 
-MEME HUMOR STYLE INSTRUCTION: ${memeOption.instruction}
-MEME INTENSITY: ${prefs.memeIntensity.toUpperCase()}
+REQUESTED HUMOR STYLE: ${memeOption.instruction}
+REQUESTED INTENSITY: ${prefs.memeIntensity.toUpperCase()}
 
-Generate 1 short funny meme scenario adhering strictly to this style and intensity.
-CRITICAL INSTRUCTIONS:
+MOOD SAFETY & PRIORITY INSTRUCTIONS (CRITICAL):
+- USER MOOD TAKES HIGHEST PRIORITY (>70% WEIGHT).
+- If the user is feeling low, tired, stressed, anxious, or overwhelmed ("${config.label}"), DO NOT use triggering, harsh, abusive, or guilt-inducing roasts—even if a savage/sarcastic style was chosen!
+- Blend the requested style with empathy so the meme feels funny and comforting without causing stress.
 - Do NOT mention "Untitled Task" or tease about unnamed tasks.
 - Focus strictly on real student categories (${categoriesText}).
 - Return ONLY raw JSON:
@@ -207,15 +209,17 @@ export async function generateAIMotivation(
 
       const prompt = `You are a supportive AI motivational companion.
 User Name: ${userDisplayName || 'Student'}
-Current Emotion: "${config.label}" (${config.emoji})
+CURRENT EMOTION (PRIMARY DIRECTION): "${config.label}" (${config.emoji}) - Tagline: "${config.vibeTagline}"
 Scheduled Task Categories Today: ${categoriesText}
 Random Seed: ${timestampSeed}
 
-MOTIVATION STYLE INSTRUCTION: ${motivationOption.instruction}
-MOTIVATION INTENSITY: ${prefs.motivationIntensity.toUpperCase()}
+REQUESTED MOTIVATION STYLE: ${motivationOption.instruction}
+REQUESTED INTENSITY: ${prefs.motivationIntensity.toUpperCase()}
 
-Generate a short motivational boost (1-2 sentences) adhering strictly to this style and intensity.
-CRITICAL INSTRUCTIONS:
+MOOD SAFETY & PRIORITY INSTRUCTIONS (CRITICAL):
+- USER MOOD TAKES HIGHEST PRIORITY (>70% WEIGHT).
+- If the user is feeling low, tired, stressed, anxious, or overwhelmed ("${config.label}"), prioritize gentle, pressure-free, reassuring encouragement over aggressive or overwhelming expectations.
+- NEVER induce guilt, anxiety, or stress about incomplete tasks.
 - NEVER mention "Untitled Task".
 - Focus on encouraging them in their actual categories (${categoriesText}).
 - Return ONLY raw JSON:
