@@ -13,6 +13,7 @@ export interface AIMotivationResponse {
 }
 
 const LOCAL_KEY_STORAGE = 'timetable_user_gemini_api_key';
+const LOCAL_CUSTOM_STYLE_STORAGE = 'timetable_user_custom_vibe_style';
 
 export function getStoredGeminiApiKey(): string {
   try {
@@ -29,6 +30,24 @@ export function saveGeminiApiKey(key: string): void {
     localStorage.setItem(LOCAL_KEY_STORAGE, key.trim());
   } catch (e) {
     console.error('Failed to save Gemini API key:', e);
+  }
+}
+
+export function getStoredCustomVibeStyle(): string {
+  try {
+    const style = localStorage.getItem(LOCAL_CUSTOM_STYLE_STORAGE);
+    if (style && style.trim().length > 0) {
+      return style.trim();
+    }
+  } catch {}
+  return '';
+}
+
+export function saveStoredCustomVibeStyle(style: string): void {
+  try {
+    localStorage.setItem(LOCAL_CUSTOM_STYLE_STORAGE, style.trim());
+  } catch (e) {
+    console.error('Failed to save custom vibe style:', e);
   }
 }
 
@@ -58,10 +77,12 @@ export async function generateAIMeme(
   userDisplayName?: string,
   taskCategories?: string[],
   forceRefresh: boolean = false,
+  customStyle?: string,
   customApiKey?: string
 ): Promise<AIMemeResponse> {
+  const activeStyle = customStyle !== undefined ? customStyle : getStoredCustomVibeStyle();
   const dateStr = new Date().toISOString().split('T')[0];
-  const cacheKey = `timetable_ai_meme_${dateStr}_${emotionId}`;
+  const cacheKey = `timetable_ai_meme_${dateStr}_${emotionId}_${activeStyle}`;
 
   if (!forceRefresh) {
     try {
@@ -81,19 +102,24 @@ export async function generateAIMeme(
   } else {
     try {
       const timestampSeed = Date.now();
-      const prompt = `You are a hilarious, witty, Duolingo-style student productivity AI companion.
+      const styleInstruction = activeStyle
+        ? `CUSTOM VIBE / THEME REQUESTED BY USER: "${activeStyle}". Adopt this specific theme/tone!`
+        : `DEFAULT TONE: Playful, witty, Duolingo-style college student humor.`;
+
+      const prompt = `You are a creative, witty student productivity AI companion.
 User Name: ${userDisplayName || 'Student'}
 Current Emotion: "${config.label}" (${config.emoji})
 Scheduled Task Categories Today: ${categoriesText}
+${styleInstruction}
 Random Seed: ${timestampSeed}
 
-Generate a brand-new, hilarious student meme scenario.
+Generate a brand-new, hilarious meme scenario.
 CRITICAL INSTRUCTIONS:
 - Do NOT mention "Untitled Task" or tease about unnamed tasks.
-- Focus strictly on real student categories like (${categoriesText}), coding, studying, caffeine, 3 AM study sessions, or Spotify playlists.
+- Focus strictly on real student categories (${categoriesText}) and user's chosen theme if specified.
 - Return ONLY raw JSON:
 {
-  "setup": "1 short relatable student scenario",
+  "setup": "1 short relatable scenario sentence",
   "punchline": "1 funny punchline sentence",
   "emoji": "1 fitting emoji"
 }`;
@@ -147,10 +173,12 @@ export async function generateAIMotivation(
   userDisplayName?: string,
   taskCategories?: string[],
   forceRefresh: boolean = false,
+  customStyle?: string,
   customApiKey?: string
 ): Promise<AIMotivationResponse> {
+  const activeStyle = customStyle !== undefined ? customStyle : getStoredCustomVibeStyle();
   const dateStr = new Date().toISOString().split('T')[0];
-  const cacheKey = `timetable_ai_motivation_${dateStr}_${emotionId}`;
+  const cacheKey = `timetable_ai_motivation_${dateStr}_${emotionId}_${activeStyle}`;
 
   if (!forceRefresh) {
     try {
@@ -170,19 +198,24 @@ export async function generateAIMotivation(
   } else {
     try {
       const timestampSeed = Date.now();
-      const prompt = `You are a supportive, witty, Duolingo-style student productivity AI companion.
+      const styleInstruction = activeStyle
+        ? `CUSTOM VIBE / THEME REQUESTED BY USER: "${activeStyle}". Adopt this specific theme/tone!`
+        : `DEFAULT TONE: Supportive, witty, Duolingo-style student productivity AI.`;
+
+      const prompt = `You are a supportive AI companion.
 User Name: ${userDisplayName || 'Student'}
 Current Emotion: "${config.label}" (${config.emoji})
 Scheduled Task Categories Today: ${categoriesText}
+${styleInstruction}
 Random Seed: ${timestampSeed}
 
 Generate a short motivational boost (1-2 sentences).
 CRITICAL INSTRUCTIONS:
-- NEVER mention "Untitled Task" or tease about unnamed tasks.
-- Focus on encouraging them in their actual categories (${categoriesText}) and building momentum.
+- NEVER mention "Untitled Task".
+- Focus on encouraging them in their actual categories (${categoriesText}) tailored to the user's chosen theme.
 - Return ONLY raw JSON:
 {
-  "motivation": "1-2 inspiring sentences tailored to their emotion and task categories."
+  "motivation": "1-2 inspiring sentences tailored to their emotion, tasks, and requested style."
 }`;
 
       const response = await fetch(

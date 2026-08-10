@@ -2882,6 +2882,81 @@ body {
   border-radius: 999px;
 }
 
+/* Custom Vibe Style Buttons & Modal */
+.btn-vibe-style-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background-color: #FFFFFF;
+  border: 1px solid #C084FC;
+  color: #7E22CE;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(126, 34, 206, 0.08);
+}
+
+.btn-vibe-style-toggle:hover {
+  background-color: #F3E8FF;
+  border-color: #A855F7;
+}
+
+.btn-vibe-style-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background-color: #F3E8FF;
+  border: 1px solid #D8B4FE;
+  color: #7E22CE;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-vibe-style-sm:hover {
+  background-color: #E9D5FF;
+  color: #6B21A8;
+}
+
+.vibe-preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.preset-chip-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background-color: #F8FAFC;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.preset-chip-btn:hover {
+  background-color: #EFF6FF;
+  border-color: #93C5FD;
+}
+
+.preset-chip-btn.active {
+  background-color: #EFF6FF;
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+
 /* Rate Limit Cooldown & Satire Styling */
 .cooldown-pill-btn {
   display: inline-flex;

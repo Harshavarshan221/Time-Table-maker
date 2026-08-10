@@ -12,16 +12,20 @@ import {
   Layers,
   History,
   Lock,
+  Sliders,
 } from 'lucide-react';
 import type { Task, CategoryConfig } from '../types/timetable';
 import { getEmotionConfig, type EmotionId, EMOTIONS } from '../constants/emotions';
 import {
   generateAIMeme,
   generateAIMotivation,
+  getStoredCustomVibeStyle,
+  saveStoredCustomVibeStyle,
   type AIMemeResponse,
   type AIMotivationResponse,
 } from '../services/aiMoodService';
 import { EmotionCheckInModal } from './EmotionCheckInModal';
+import { CustomVibeModal } from './CustomVibeModal';
 import { formatTimeRange, formatDurationLabel } from '../utils/dateUtils';
 import {
   attemptRequest,
@@ -60,6 +64,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   onEditTask,
 }) => {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
+  const [isCustomVibeModalOpen, setIsCustomVibeModalOpen] = useState(false);
+  const [customVibeStyle, setCustomVibeStyle] = useState(() => getStoredCustomVibeStyle());
 
   const [aiMeme, setAiMeme] = useState<AIMemeResponse | null>(null);
   const [isLoadingMeme, setIsLoadingMeme] = useState(false);
@@ -120,18 +126,18 @@ export const HomePage: React.FC<HomePageProps> = ({
   }, []);
 
   // Independent Meme Fetch
-  const fetchMeme = (emotionId: EmotionId, forceRefresh: boolean = false) => {
+  const fetchMeme = (emotionId: EmotionId, forceRefresh: boolean = false, style?: string) => {
     setIsLoadingMeme(true);
-    generateAIMeme(emotionId, userName, taskCategories, forceRefresh).then((res) => {
+    generateAIMeme(emotionId, userName, taskCategories, forceRefresh, style).then((res) => {
       setAiMeme(res);
       setIsLoadingMeme(false);
     });
   };
 
   // Independent Motivation Fetch
-  const fetchMotivation = (emotionId: EmotionId, forceRefresh: boolean = false) => {
+  const fetchMotivation = (emotionId: EmotionId, forceRefresh: boolean = false, style?: string) => {
     setIsLoadingMotivation(true);
-    generateAIMotivation(emotionId, userName, taskCategories, forceRefresh).then((res) => {
+    generateAIMotivation(emotionId, userName, taskCategories, forceRefresh, style).then((res) => {
       setAiMotivation(res);
       setIsLoadingMotivation(false);
     });
@@ -152,7 +158,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       return;
     }
 
-    fetchMeme(currentEmotionId, true);
+    fetchMeme(currentEmotionId, true, customVibeStyle);
   };
 
   // User Motivation Refresh Action (Rate-Limit Protected)
@@ -170,7 +176,16 @@ export const HomePage: React.FC<HomePageProps> = ({
       return;
     }
 
-    fetchMotivation(currentEmotionId, true);
+    fetchMotivation(currentEmotionId, true, customVibeStyle);
+  };
+
+  const handleSaveCustomStyle = (newStyle: string) => {
+    saveStoredCustomVibeStyle(newStyle);
+    setCustomVibeStyle(newStyle);
+    if (currentEmotionId) {
+      fetchMeme(currentEmotionId, true, newStyle);
+      fetchMotivation(currentEmotionId, true, newStyle);
+    }
   };
 
   // Generate AI Content whenever emotion or user changes
@@ -181,8 +196,8 @@ export const HomePage: React.FC<HomePageProps> = ({
       return;
     }
 
-    fetchMeme(currentEmotionId, false);
-    fetchMotivation(currentEmotionId, false);
+    fetchMeme(currentEmotionId, false, customVibeStyle);
+    fetchMotivation(currentEmotionId, false, customVibeStyle);
   }, [currentEmotionId, userName, todayTasks.length]);
 
   return (
@@ -203,6 +218,16 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="hero-right-actions">
+          <button
+            type="button"
+            className="btn-vibe-style-toggle"
+            onClick={() => setIsCustomVibeModalOpen(true)}
+            title="Customize AI Quote Style & Prompts"
+          >
+            <Sliders className="icon-xs" />
+            <span>{customVibeStyle ? 'Vibe Style: Custom' : 'Customize AI Tone'}</span>
+          </button>
+
           <div className="hero-date-badge">
             <Calendar className="icon-xs" />
             <span>{dateFormatted}</span>
@@ -288,6 +313,14 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <Bot className="icon-nano" /> YOUR DAILY VIBE
               </span>
               <div className="flex-align-center gap-2">
+                <button
+                  type="button"
+                  className="btn-vibe-style-sm"
+                  onClick={() => setIsCustomVibeModalOpen(true)}
+                  title="Change AI quote style/prompt"
+                >
+                  <Sliders className="icon-nano" />
+                </button>
                 {rateLimitStatus.isCoolingDown ? (
                   <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
                     <Lock className="icon-nano" />
@@ -340,6 +373,14 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <Flame className="icon-nano" /> A LITTLE PUSH 🚀
               </span>
               <div className="flex-align-center gap-2">
+                <button
+                  type="button"
+                  className="btn-vibe-style-sm"
+                  onClick={() => setIsCustomVibeModalOpen(true)}
+                  title="Change AI quote style/prompt"
+                >
+                  <Sliders className="icon-nano" />
+                </button>
                 {rateLimitStatus.isCoolingDown ? (
                   <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
                     <Lock className="icon-nano" />
@@ -544,6 +585,14 @@ export const HomePage: React.FC<HomePageProps> = ({
         onClose={() => setIsCheckInModalOpen(false)}
         onSelectEmotion={onSelectEmotion}
         currentEmotionId={currentEmotionId}
+      />
+
+      {/* Custom AI Vibe / Quote Style Modal */}
+      <CustomVibeModal
+        isOpen={isCustomVibeModalOpen}
+        onClose={() => setIsCustomVibeModalOpen(false)}
+        currentStyle={customVibeStyle}
+        onSaveStyle={handleSaveCustomStyle}
       />
     </div>
   );
