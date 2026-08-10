@@ -1,4 +1,10 @@
 import { getEmotionConfig, type EmotionId } from '../constants/emotions';
+import {
+  MEME_STYLES,
+  MOTIVATION_STYLES,
+  DEFAULT_AI_PREFERENCES,
+  type AIPreferences,
+} from '../constants/aiStyleOptions';
 
 export interface AIMemeResponse {
   setup: string;
@@ -13,7 +19,7 @@ export interface AIMotivationResponse {
 }
 
 const LOCAL_KEY_STORAGE = 'timetable_user_gemini_api_key';
-const LOCAL_CUSTOM_STYLE_STORAGE = 'timetable_user_custom_vibe_style';
+const LOCAL_PREFERENCES_KEY = 'timetable.app.ai.preferences.v1';
 
 export function getStoredGeminiApiKey(): string {
   try {
@@ -33,21 +39,19 @@ export function saveGeminiApiKey(key: string): void {
   }
 }
 
-export function getStoredCustomVibeStyle(): string {
+export function getStoredAIPreferences(): AIPreferences {
   try {
-    const style = localStorage.getItem(LOCAL_CUSTOM_STYLE_STORAGE);
-    if (style && style.trim().length > 0) {
-      return style.trim();
-    }
+    const raw = localStorage.getItem(LOCAL_PREFERENCES_KEY);
+    if (raw) return { ...DEFAULT_AI_PREFERENCES, ...JSON.parse(raw) };
   } catch {}
-  return '';
+  return DEFAULT_AI_PREFERENCES;
 }
 
-export function saveStoredCustomVibeStyle(style: string): void {
+export function saveStoredAIPreferences(prefs: AIPreferences): void {
   try {
-    localStorage.setItem(LOCAL_CUSTOM_STYLE_STORAGE, style.trim());
+    localStorage.setItem(LOCAL_PREFERENCES_KEY, JSON.stringify(prefs));
   } catch (e) {
-    console.error('Failed to save custom vibe style:', e);
+    console.error('Failed to save AI preferences:', e);
   }
 }
 
@@ -77,12 +81,12 @@ export async function generateAIMeme(
   userDisplayName?: string,
   taskCategories?: string[],
   forceRefresh: boolean = false,
-  customStyle?: string,
+  customPrefs?: AIPreferences,
   customApiKey?: string
 ): Promise<AIMemeResponse> {
-  const activeStyle = customStyle !== undefined ? customStyle : getStoredCustomVibeStyle();
+  const prefs = customPrefs || getStoredAIPreferences();
   const dateStr = new Date().toISOString().split('T')[0];
-  const cacheKey = `timetable_ai_meme_${dateStr}_${emotionId}_${activeStyle}`;
+  const cacheKey = `timetable_ai_meme_${dateStr}_${emotionId}_${prefs.memeStyle}_${prefs.memeIntensity}`;
 
   if (!forceRefresh) {
     try {
@@ -102,24 +106,24 @@ export async function generateAIMeme(
   } else {
     try {
       const timestampSeed = Date.now();
-      const styleInstruction = activeStyle
-        ? `CUSTOM VIBE / THEME REQUESTED BY USER: "${activeStyle}". Adopt this specific theme/tone!`
-        : `DEFAULT TONE: Playful, witty, Duolingo-style college student humor.`;
+      const memeOption = MEME_STYLES.find((m) => m.id === prefs.memeStyle) || MEME_STYLES[0];
 
-      const prompt = `You are a creative, witty student productivity AI companion.
+      const prompt = `You are a creative student productivity AI meme companion.
 User Name: ${userDisplayName || 'Student'}
 Current Emotion: "${config.label}" (${config.emoji})
 Scheduled Task Categories Today: ${categoriesText}
-${styleInstruction}
 Random Seed: ${timestampSeed}
 
-Generate a brand-new, hilarious meme scenario.
+MEME HUMOR STYLE INSTRUCTION: ${memeOption.instruction}
+MEME INTENSITY: ${prefs.memeIntensity.toUpperCase()}
+
+Generate 1 short funny meme scenario adhering strictly to this style and intensity.
 CRITICAL INSTRUCTIONS:
 - Do NOT mention "Untitled Task" or tease about unnamed tasks.
-- Focus strictly on real student categories (${categoriesText}) and user's chosen theme if specified.
+- Focus strictly on real student categories (${categoriesText}).
 - Return ONLY raw JSON:
 {
-  "setup": "1 short relatable scenario sentence",
+  "setup": "1 short scenario sentence",
   "punchline": "1 funny punchline sentence",
   "emoji": "1 fitting emoji"
 }`;
@@ -173,12 +177,12 @@ export async function generateAIMotivation(
   userDisplayName?: string,
   taskCategories?: string[],
   forceRefresh: boolean = false,
-  customStyle?: string,
+  customPrefs?: AIPreferences,
   customApiKey?: string
 ): Promise<AIMotivationResponse> {
-  const activeStyle = customStyle !== undefined ? customStyle : getStoredCustomVibeStyle();
+  const prefs = customPrefs || getStoredAIPreferences();
   const dateStr = new Date().toISOString().split('T')[0];
-  const cacheKey = `timetable_ai_motivation_${dateStr}_${emotionId}_${activeStyle}`;
+  const cacheKey = `timetable_ai_motivation_${dateStr}_${emotionId}_${prefs.motivationStyle}_${prefs.motivationIntensity}`;
 
   if (!forceRefresh) {
     try {
@@ -198,24 +202,25 @@ export async function generateAIMotivation(
   } else {
     try {
       const timestampSeed = Date.now();
-      const styleInstruction = activeStyle
-        ? `CUSTOM VIBE / THEME REQUESTED BY USER: "${activeStyle}". Adopt this specific theme/tone!`
-        : `DEFAULT TONE: Supportive, witty, Duolingo-style student productivity AI.`;
+      const motivationOption =
+        MOTIVATION_STYLES.find((m) => m.id === prefs.motivationStyle) || MOTIVATION_STYLES[0];
 
-      const prompt = `You are a supportive AI companion.
+      const prompt = `You are a supportive AI motivational companion.
 User Name: ${userDisplayName || 'Student'}
 Current Emotion: "${config.label}" (${config.emoji})
 Scheduled Task Categories Today: ${categoriesText}
-${styleInstruction}
 Random Seed: ${timestampSeed}
 
-Generate a short motivational boost (1-2 sentences).
+MOTIVATION STYLE INSTRUCTION: ${motivationOption.instruction}
+MOTIVATION INTENSITY: ${prefs.motivationIntensity.toUpperCase()}
+
+Generate a short motivational boost (1-2 sentences) adhering strictly to this style and intensity.
 CRITICAL INSTRUCTIONS:
 - NEVER mention "Untitled Task".
-- Focus on encouraging them in their actual categories (${categoriesText}) tailored to the user's chosen theme.
+- Focus on encouraging them in their actual categories (${categoriesText}).
 - Return ONLY raw JSON:
 {
-  "motivation": "1-2 inspiring sentences tailored to their emotion, tasks, and requested style."
+  "motivation": "1-2 inspiring sentences tailored to their emotion and requested style."
 }`;
 
       const response = await fetch(

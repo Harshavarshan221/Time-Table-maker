@@ -19,13 +19,14 @@ import { getEmotionConfig, type EmotionId, EMOTIONS } from '../constants/emotion
 import {
   generateAIMeme,
   generateAIMotivation,
-  getStoredCustomVibeStyle,
-  saveStoredCustomVibeStyle,
+  getStoredAIPreferences,
+  saveStoredAIPreferences,
   type AIMemeResponse,
   type AIMotivationResponse,
 } from '../services/aiMoodService';
+import { type AIPreferences } from '../constants/aiStyleOptions';
 import { EmotionCheckInModal } from './EmotionCheckInModal';
-import { CustomVibeModal } from './CustomVibeModal';
+import { AIStyleSelectorModal } from './home/AIStyleSelectorModal';
 import { formatTimeRange, formatDurationLabel } from '../utils/dateUtils';
 import {
   attemptRequest,
@@ -64,8 +65,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   onEditTask,
 }) => {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
-  const [isCustomVibeModalOpen, setIsCustomVibeModalOpen] = useState(false);
-  const [customVibeStyle, setCustomVibeStyle] = useState(() => getStoredCustomVibeStyle());
+  const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
+  const [aiPreferences, setAiPreferences] = useState<AIPreferences>(() => getStoredAIPreferences());
 
   const [aiMeme, setAiMeme] = useState<AIMemeResponse | null>(null);
   const [isLoadingMeme, setIsLoadingMeme] = useState(false);
@@ -126,18 +127,18 @@ export const HomePage: React.FC<HomePageProps> = ({
   }, []);
 
   // Independent Meme Fetch
-  const fetchMeme = (emotionId: EmotionId, forceRefresh: boolean = false, style?: string) => {
+  const fetchMeme = (emotionId: EmotionId, forceRefresh: boolean = false, prefs?: AIPreferences) => {
     setIsLoadingMeme(true);
-    generateAIMeme(emotionId, userName, taskCategories, forceRefresh, style).then((res) => {
+    generateAIMeme(emotionId, userName, taskCategories, forceRefresh, prefs || aiPreferences).then((res) => {
       setAiMeme(res);
       setIsLoadingMeme(false);
     });
   };
 
   // Independent Motivation Fetch
-  const fetchMotivation = (emotionId: EmotionId, forceRefresh: boolean = false, style?: string) => {
+  const fetchMotivation = (emotionId: EmotionId, forceRefresh: boolean = false, prefs?: AIPreferences) => {
     setIsLoadingMotivation(true);
-    generateAIMotivation(emotionId, userName, taskCategories, forceRefresh, style).then((res) => {
+    generateAIMotivation(emotionId, userName, taskCategories, forceRefresh, prefs || aiPreferences).then((res) => {
       setAiMotivation(res);
       setIsLoadingMotivation(false);
     });
@@ -158,7 +159,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       return;
     }
 
-    fetchMeme(currentEmotionId, true, customVibeStyle);
+    fetchMeme(currentEmotionId, true);
   };
 
   // User Motivation Refresh Action (Rate-Limit Protected)
@@ -176,16 +177,12 @@ export const HomePage: React.FC<HomePageProps> = ({
       return;
     }
 
-    fetchMotivation(currentEmotionId, true, customVibeStyle);
+    fetchMotivation(currentEmotionId, true);
   };
 
-  const handleSaveCustomStyle = (newStyle: string) => {
-    saveStoredCustomVibeStyle(newStyle);
-    setCustomVibeStyle(newStyle);
-    if (currentEmotionId) {
-      fetchMeme(currentEmotionId, true, newStyle);
-      fetchMotivation(currentEmotionId, true, newStyle);
-    }
+  const handleSavePreferences = (newPrefs: AIPreferences) => {
+    saveStoredAIPreferences(newPrefs);
+    setAiPreferences(newPrefs);
   };
 
   // Generate AI Content whenever emotion or user changes
@@ -196,8 +193,8 @@ export const HomePage: React.FC<HomePageProps> = ({
       return;
     }
 
-    fetchMeme(currentEmotionId, false, customVibeStyle);
-    fetchMotivation(currentEmotionId, false, customVibeStyle);
+    fetchMeme(currentEmotionId, false);
+    fetchMotivation(currentEmotionId, false);
   }, [currentEmotionId, userName, todayTasks.length]);
 
   return (
@@ -308,12 +305,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                   className="btn-vibe-style-sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsCustomVibeModalOpen(true);
+                    setIsStyleModalOpen(true);
                   }}
-                  title="Change AI quote style & tone"
+                  title="Customize Meme Style"
                 >
                   <Sliders className="icon-nano" />
-                  <span className="vibe-style-btn-text">Style</span>
+                  <span className="vibe-style-btn-text">Meme Style</span>
                 </button>
                 {rateLimitStatus.isCoolingDown ? (
                   <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
@@ -372,12 +369,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                   className="btn-vibe-style-sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsCustomVibeModalOpen(true);
+                    setIsStyleModalOpen(true);
                   }}
-                  title="Change AI quote style & tone"
+                  title="Customize Motivation Style"
                 >
                   <Sliders className="icon-nano" />
-                  <span className="vibe-style-btn-text">Style</span>
+                  <span className="vibe-style-btn-text">Motivation Style</span>
                 </button>
                 {rateLimitStatus.isCoolingDown ? (
                   <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
@@ -585,12 +582,12 @@ export const HomePage: React.FC<HomePageProps> = ({
         currentEmotionId={currentEmotionId}
       />
 
-      {/* Custom AI Vibe / Quote Style Modal */}
-      <CustomVibeModal
-        isOpen={isCustomVibeModalOpen}
-        onClose={() => setIsCustomVibeModalOpen(false)}
-        currentStyle={customVibeStyle}
-        onSaveStyle={handleSaveCustomStyle}
+      {/* Custom AI Style Selector Modal */}
+      <AIStyleSelectorModal
+        isOpen={isStyleModalOpen}
+        onClose={() => setIsStyleModalOpen(false)}
+        preferences={aiPreferences}
+        onSavePreferences={handleSavePreferences}
       />
     </div>
   );
