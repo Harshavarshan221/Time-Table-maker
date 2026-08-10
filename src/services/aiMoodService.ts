@@ -10,13 +10,34 @@ export interface AIMoodResponse {
   isAIGenerated: boolean;
 }
 
+const LOCAL_KEY_STORAGE = 'timetable_user_gemini_api_key';
+
+export function getStoredGeminiApiKey(): string {
+  try {
+    const userKey = localStorage.getItem(LOCAL_KEY_STORAGE);
+    if (userKey && userKey.trim().length > 0) {
+      return userKey.trim();
+    }
+  } catch {}
+  return import.meta.env.VITE_GEMINI_API_KEY || '';
+}
+
+export function saveGeminiApiKey(key: string): void {
+  try {
+    localStorage.setItem(LOCAL_KEY_STORAGE, key.trim());
+  } catch (e) {
+    console.error('Failed to save Gemini API key:', e);
+  }
+}
+
 export async function generateAIMoodContent(
   emotionId: EmotionId,
   userDisplayName?: string,
-  todayTaskTitles?: string[]
+  todayTaskTitles?: string[],
+  customApiKey?: string
 ): Promise<AIMoodResponse> {
   const config = getEmotionConfig(emotionId);
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = customApiKey || getStoredGeminiApiKey();
 
   // If no Gemini API key, return offline fallback immediately
   if (!apiKey) {
@@ -24,20 +45,25 @@ export async function generateAIMoodContent(
   }
 
   try {
-    const tasksSummary = todayTaskTitles && todayTaskTitles.length > 0
-      ? `Today's scheduled tasks: ${todayTaskTitles.join(', ')}.`
-      : 'No tasks scheduled yet today.';
+    const tasksSummary =
+      todayTaskTitles && todayTaskTitles.length > 0
+        ? `Today's scheduled tasks: ${todayTaskTitles.join(', ')}.`
+        : 'No tasks scheduled yet today.';
 
     const prompt = `You are a playful, witty, Duolingo-style productivity AI companion.
 User Name: ${userDisplayName || 'Friend'}
 Current Emotion: "${config.label}" (${config.emoji})
 ${tasksSummary}
 
-Generate a short JSON object with:
-1. "meme": an object with "setup" (1 short relatable sentence), "punchline" (1 short witty sentence), and "emoji" (1 fitting emoji).
-2. "motivation": 1-2 inspiring sentences tailored to their emotion and tasks. Keep it friendly and concise!
+Generate a hilarious, highly relatable meme text and a short motivational boost.
+Requirements:
+1. "meme": an object with:
+   - "setup": (1 short relatable scenario sentence)
+   - "punchline": (1 funny punchline sentence)
+   - "emoji": (1 fitting emoji)
+2. "motivation": (1-2 inspiring sentences tailored to their emotion and tasks. Keep it friendly, witty, and concise!)
 
-Return ONLY raw JSON in this exact format:
+Return ONLY valid raw JSON in this exact structure:
 {
   "meme": {
     "setup": "...",
@@ -81,7 +107,7 @@ Return ONLY raw JSON in this exact format:
       }
     }
   } catch (err) {
-    console.warn('AI generation unavailable, using fallback content:', err);
+    console.warn('Gemini API call failed, falling back to smart library:', err);
   }
 
   return getFallbackContent(emotionId);

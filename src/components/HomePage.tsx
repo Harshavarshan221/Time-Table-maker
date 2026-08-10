@@ -11,11 +11,17 @@ import {
   Bot,
   Layers,
   History,
+  Key,
 } from 'lucide-react';
 import type { Task, CategoryConfig } from '../types/timetable';
 import { getEmotionConfig, type EmotionId, EMOTIONS } from '../constants/emotions';
-import { generateAIMoodContent, type AIMoodResponse } from '../services/aiMoodService';
+import {
+  generateAIMoodContent,
+  getStoredGeminiApiKey,
+  type AIMoodResponse,
+} from '../services/aiMoodService';
 import { EmotionCheckInModal } from './EmotionCheckInModal';
+import { AISettingsModal } from './AISettingsModal';
 import { formatTimeRange, formatDurationLabel } from '../utils/dateUtils';
 import type { User } from 'firebase/auth';
 
@@ -48,11 +54,14 @@ export const HomePage: React.FC<HomePageProps> = ({
   onEditTask,
 }) => {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
+  const [isAISettingsModalOpen, setIsAISettingsModalOpen] = useState(false);
   const [aiContent, setAiContent] = useState<AIMoodResponse | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
 
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Friend';
   const emotionConfig = currentEmotionId ? getEmotionConfig(currentEmotionId) : null;
+
+  const hasApiKey = getStoredGeminiApiKey().length > 0;
 
   // Determine greeting based on current hour
   const currentHour = new Date().getHours();
@@ -82,28 +91,22 @@ export const HomePage: React.FC<HomePageProps> = ({
   const progressPercentage =
     totalTasks > 0 ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 0;
 
+  const fetchAIContent = (emotionId: EmotionId) => {
+    setIsLoadingAI(true);
+    const taskTitles = todayTasks.map((t) => t.title);
+    generateAIMoodContent(emotionId, userName, taskTitles).then((res) => {
+      setAiContent(res);
+      setIsLoadingAI(false);
+    });
+  };
+
   // Generate AI Content whenever emotion or user changes
   useEffect(() => {
     if (!currentEmotionId) {
       setAiContent(null);
       return;
     }
-
-    let isMounted = true;
-    setIsLoadingAI(true);
-
-    const taskTitles = todayTasks.map((t) => t.title);
-
-    generateAIMoodContent(currentEmotionId, userName, taskTitles).then((res) => {
-      if (isMounted) {
-        setAiContent(res);
-        setIsLoadingAI(false);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
+    fetchAIContent(currentEmotionId);
   }, [currentEmotionId, userName, todayTasks.length]);
 
   return (
@@ -113,7 +116,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="hero-greeting-box">
           <div className="greeting-pill-badge">
             <Sparkles className="icon-nano text-primary" />
-            <span>Daily Companion</span>
+            <span>Daily AI Companion</span>
           </div>
           <h2 className="hero-greeting-title">
             {greetingTime}, <span className="highlight-name">{userName}</span> 👋
@@ -123,9 +126,21 @@ export const HomePage: React.FC<HomePageProps> = ({
           </p>
         </div>
 
-        <div className="hero-date-badge">
-          <Calendar className="icon-xs" />
-          <span>{dateFormatted}</span>
+        <div className="hero-right-actions">
+          <button
+            type="button"
+            className={`btn-ai-key-badge ${hasApiKey ? 'connected' : ''}`}
+            onClick={() => setIsAISettingsModalOpen(true)}
+            title="Configure Gemini AI Key"
+          >
+            <Key className="icon-nano" />
+            <span>{hasApiKey ? 'Gemini AI Active' : 'Connect Gemini AI Key'}</span>
+          </button>
+
+          <div className="hero-date-badge">
+            <Calendar className="icon-xs" />
+            <span>{dateFormatted}</span>
+          </div>
         </div>
       </section>
 
@@ -143,14 +158,16 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="mood-badge-label" style={{ color: emotionConfig.textColor }}>
                 TODAY'S MOOD
               </span>
-              <button
-                type="button"
-                className="btn-change-mood"
-                onClick={() => setIsCheckInModalOpen(true)}
-              >
-                <RefreshCw className="icon-nano" />
-                <span>Change Mood</span>
-              </button>
+              <div className="mood-header-actions">
+                <button
+                  type="button"
+                  className="btn-change-mood"
+                  onClick={() => setIsCheckInModalOpen(true)}
+                >
+                  <RefreshCw className="icon-nano" />
+                  <span>Change Mood</span>
+                </button>
+              </div>
             </div>
 
             <div className="mood-display-body">
@@ -204,13 +221,35 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="badge-pill meme-pill">
                 <Bot className="icon-nano" /> YOUR DAILY VIBE
               </span>
-              {aiContent?.isAIGenerated && <span className="ai-sparkle-tag">✨ AI Companion</span>}
+              <div className="flex-align-center gap-2">
+                {aiContent?.isAIGenerated ? (
+                  <span className="ai-sparkle-tag">✨ Gemini AI</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-connect-ai-sm"
+                    onClick={() => setIsAISettingsModalOpen(true)}
+                  >
+                    <Key className="icon-nano" />
+                    <span>Connect AI Key</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn-regen-sm"
+                  onClick={() => fetchAIContent(currentEmotionId)}
+                  disabled={isLoadingAI}
+                  title="Generate another AI vibe"
+                >
+                  <RefreshCw className={`icon-nano ${isLoadingAI ? 'spin-icon' : ''}`} />
+                </button>
+              </div>
             </div>
 
             {isLoadingAI ? (
               <div className="ai-loading-placeholder">
                 <RefreshCw className="icon-sm spin-icon text-primary" />
-                <span>Crafting your daily vibe...</span>
+                <span>Generating custom AI vibe...</span>
               </div>
             ) : aiContent ? (
               <div className="meme-content-box">
@@ -406,6 +445,15 @@ export const HomePage: React.FC<HomePageProps> = ({
         onClose={() => setIsCheckInModalOpen(false)}
         onSelectEmotion={onSelectEmotion}
         currentEmotionId={currentEmotionId}
+      />
+
+      {/* Gemini AI Key Settings Modal */}
+      <AISettingsModal
+        isOpen={isAISettingsModalOpen}
+        onClose={() => setIsAISettingsModalOpen(false)}
+        onKeySaved={() => {
+          if (currentEmotionId) fetchAIContent(currentEmotionId);
+        }}
       />
     </div>
   );

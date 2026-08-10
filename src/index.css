@@ -3247,6 +3247,102 @@ body {
   font-weight: 800;
 }
 
+.hero-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-ai-key-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background-color: #FEF3C7;
+  border: 1px solid #FDE68A;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #B45309;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-ai-key-badge.connected {
+  background-color: #ECFDF5;
+  border-color: #A7F3D0;
+  color: #047857;
+}
+
+.btn-ai-key-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-connect-ai-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background-color: #FEF3C7;
+  border: 1px solid #FDE68A;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #92400E;
+  cursor: pointer;
+}
+
+.btn-connect-ai-sm:hover {
+  background-color: #FDE68A;
+}
+
+.btn-regen-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-regen-sm:hover {
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+}
+
+.ai-settings-modal {
+  max-width: 480px !important;
+}
+
+.ai-key-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  color: #1E40AF;
+  margin-top: 12px;
+}
+
+.ai-link {
+  color: #2563EB;
+  font-weight: 700;
+  text-decoration: underline;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
 /* RESPONSIVE LAYOUT ADJUSTMENTS */
 @media (max-width: 768px) {
   .ai-vibe-grid {
@@ -3256,6 +3352,11 @@ body {
   .home-hero-section {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .hero-right-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .compact-task-item {
