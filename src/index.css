@@ -2617,12 +2617,16 @@ body {
    HOME PAGE & DAILY EMOTION AI STYLES
    ========================================================================== */
 .home-page-container {
+  flex: 1;
+  overflow-y: auto;
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px 20px 48px;
+  padding: 24px 20px 60px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 1. HERO GREETING BANNER */
