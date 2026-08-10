@@ -239,3 +239,49 @@ export function saveUserTrashHistory(uid: string, history: any[]): void {
   }
 }
 
+const DEFAULT_GRID_SETTINGS = {
+  startHour: 4,
+  endHour: 28,
+  hourHeightPx: 64,
+  timeFormat: '12h' as const,
+};
+
+export function loadGridSettings(uid?: string, weekId?: string) {
+  try {
+    if (uid && weekId) {
+      const userWeekRaw = localStorage.getItem(`timetable_grid_settings_${uid}_${weekId}`);
+      if (userWeekRaw) return JSON.parse(userWeekRaw);
+    }
+    if (weekId) {
+      const weekRaw = localStorage.getItem(`timetable_grid_settings_${weekId}`);
+      if (weekRaw) return JSON.parse(weekRaw);
+    }
+    if (uid) {
+      const userRaw = localStorage.getItem(`timetable_grid_settings_${uid}`);
+      if (userRaw) return JSON.parse(userRaw);
+    }
+    const globalRaw = localStorage.getItem('timetable_grid_settings');
+    if (globalRaw) return JSON.parse(globalRaw);
+  } catch (e) {
+    console.error('Failed to load grid settings:', e);
+  }
+  return DEFAULT_GRID_SETTINGS;
+}
+
+export function saveGridSettings(settings: any, uid?: string, weekId?: string): void {
+  try {
+    localStorage.setItem('timetable_grid_settings', JSON.stringify(settings));
+    if (weekId) {
+      localStorage.setItem(`timetable_grid_settings_${weekId}`, JSON.stringify(settings));
+    }
+    if (uid) {
+      localStorage.setItem(`timetable_grid_settings_${uid}`, JSON.stringify(settings));
+      if (weekId) {
+        localStorage.setItem(`timetable_grid_settings_${uid}_${weekId}`, JSON.stringify(settings));
+      }
+    }
+  } catch (e) {
+    console.error('Failed to save grid settings:', e);
+  }
+}
+

@@ -31,6 +31,8 @@ import {
   saveUserCategories,
   loadUserTrashHistory,
   saveUserTrashHistory,
+  loadGridSettings,
+  saveGridSettings,
 } from './utils/storage';
 import {
   subscribeToWeekTasks,
@@ -42,12 +44,13 @@ import {
   subscribeToCategories,
   saveCategoriesToFirestore,
   deleteCategoryFromFirestore,
+  saveGridSettingsToFirestore,
+  subscribeToGridSettings,
 } from './utils/firestoreStorage';
 import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, History, RotateCcw, X, Bell } from 'lucide-react';
 import { TrashHistoryModal } from './components/TrashHistoryModal';
 import type { DeletedTaskRecord } from './components/TrashHistoryModal';
 
-import { ScrollableCalendarStrip } from './components/ScrollableCalendarStrip';
 import { TodayTasksModal } from './components/TodayTasksModal';
 import {
   getTodayTasks,
@@ -254,11 +257,30 @@ export const App: React.FC = () => {
       }
     );
 
+    // 4. Subscribe to Per-Week Independent Grid Settings
+    const unsubGridSettings = subscribeToGridSettings(
+      currentUser.uid,
+      currentWeekInfo.weekId,
+      (settings) => {
+        if (settings && settings.startHour !== undefined) {
+          setGridSettings(settings);
+          saveGridSettings(settings, currentUser.uid, currentWeekInfo.weekId);
+        }
+      }
+    );
+
     return () => {
       unsubWeek();
       unsubUnscheduled();
       unsubCategories();
+      unsubGridSettings();
     };
+  }, [currentUser, currentWeekInfo.weekId]);
+
+  // Sync & Load per-week independent grid settings when week or user changes
+  useEffect(() => {
+    const settings = loadGridSettings(currentUser?.uid, currentWeekInfo.weekId);
+    setGridSettings(settings);
   }, [currentUser, currentWeekInfo.weekId]);
 
   // Update currentWeekInfo whenever selectedDate changes
@@ -752,10 +774,6 @@ export const App: React.FC = () => {
           )}
 
           <main className="timetable-main">
-            <ScrollableCalendarStrip
-              selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
-            />
             <TimetableGrid
               currentWeekInfo={currentWeekInfo}
               scheduledTasks={weekScheduledTasks}
@@ -819,7 +837,13 @@ export const App: React.FC = () => {
         isOpen={isGridSettingsModalOpen}
         onClose={() => setIsGridSettingsModalOpen(false)}
         settings={gridSettings}
-        onSaveSettings={setGridSettings}
+        onSaveSettings={(newSettings) => {
+          setGridSettings(newSettings);
+          saveGridSettings(newSettings, currentUser?.uid, currentWeekInfo.weekId);
+          if (currentUser) {
+            saveGridSettingsToFirestore(currentUser.uid, currentWeekInfo.weekId, newSettings);
+          }
+        }}
       />
 
       {/* Today's Tasks Schedule & Notifications Modal */}

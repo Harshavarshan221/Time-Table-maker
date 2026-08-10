@@ -196,3 +196,31 @@ export async function deleteCategoryFromFirestore(
   const catDocRef = doc(db, 'users', userId, 'categories', categoryId);
   await deleteDoc(catDocRef);
 }
+
+/**
+ * Save per-week grid settings to Cloud Firestore.
+ */
+export async function saveGridSettingsToFirestore(
+  userId: string,
+  weekId: string,
+  settings: any
+): Promise<void> {
+  const settingsDocRef = doc(db, 'users', userId, 'weeks', weekId, 'settings', 'gridSettings');
+  await setDoc(settingsDocRef, settings, { merge: true });
+}
+
+/**
+ * Subscribe to per-week grid settings from Cloud Firestore.
+ */
+export function subscribeToGridSettings(
+  userId: string,
+  weekId: string,
+  onSettingsUpdate: (settings: any) => void
+): () => void {
+  const settingsDocRef = doc(db, 'users', userId, 'weeks', weekId, 'settings', 'gridSettings');
+  return onSnapshot(settingsDocRef, (snap) => {
+    if (snap.exists()) {
+      onSettingsUpdate(snap.data());
+    }
+  });
+}
