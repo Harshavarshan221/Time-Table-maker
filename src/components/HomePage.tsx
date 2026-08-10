@@ -14,7 +14,12 @@ import {
 } from 'lucide-react';
 import type { Task, CategoryConfig } from '../types/timetable';
 import { getEmotionConfig, type EmotionId, EMOTIONS } from '../constants/emotions';
-import { generateAIMoodContent, type AIMoodResponse } from '../services/aiMoodService';
+import {
+  generateAIMeme,
+  generateAIMotivation,
+  type AIMemeResponse,
+  type AIMotivationResponse,
+} from '../services/aiMoodService';
 import { EmotionCheckInModal } from './EmotionCheckInModal';
 import { formatTimeRange, formatDurationLabel } from '../utils/dateUtils';
 import type { User } from 'firebase/auth';
@@ -48,8 +53,12 @@ export const HomePage: React.FC<HomePageProps> = ({
   onEditTask,
 }) => {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
-  const [aiContent, setAiContent] = useState<AIMoodResponse | null>(null);
-  const [isLoadingAI, setIsLoadingAI] = useState(false);
+
+  const [aiMeme, setAiMeme] = useState<AIMemeResponse | null>(null);
+  const [isLoadingMeme, setIsLoadingMeme] = useState(false);
+
+  const [aiMotivation, setAiMotivation] = useState<AIMotivationResponse | null>(null);
+  const [isLoadingMotivation, setIsLoadingMotivation] = useState(false);
 
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Friend';
   const emotionConfig = currentEmotionId ? getEmotionConfig(currentEmotionId) : null;
@@ -69,7 +78,6 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   // Calculate Today's Progress
   const totalTasks = todayTasks.length;
-  // Calculate completed tasks based on past time
   const currentMins = new Date().getHours() * 60 + new Date().getMinutes();
   const completedTasks = todayTasks.filter((t) => {
     if (!t.startTime) return false;
@@ -82,22 +90,37 @@ export const HomePage: React.FC<HomePageProps> = ({
   const progressPercentage =
     totalTasks > 0 ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 0;
 
-  const fetchAIContent = (emotionId: EmotionId, forceRefresh: boolean = false) => {
-    setIsLoadingAI(true);
-    const taskTitles = todayTasks.map((t) => t.title);
-    generateAIMoodContent(emotionId, userName, taskTitles, forceRefresh).then((res) => {
-      setAiContent(res);
-      setIsLoadingAI(false);
+  // Extract task categories, avoiding reliance on "Untitled Task"
+  const taskCategories = todayTasks.map((t) => t.category);
+
+  // Independent Meme Refresh
+  const fetchMeme = (emotionId: EmotionId, forceRefresh: boolean = false) => {
+    setIsLoadingMeme(true);
+    generateAIMeme(emotionId, userName, taskCategories, forceRefresh).then((res) => {
+      setAiMeme(res);
+      setIsLoadingMeme(false);
+    });
+  };
+
+  // Independent Motivation Refresh
+  const fetchMotivation = (emotionId: EmotionId, forceRefresh: boolean = false) => {
+    setIsLoadingMotivation(true);
+    generateAIMotivation(emotionId, userName, taskCategories, forceRefresh).then((res) => {
+      setAiMotivation(res);
+      setIsLoadingMotivation(false);
     });
   };
 
   // Generate AI Content whenever emotion or user changes
   useEffect(() => {
     if (!currentEmotionId) {
-      setAiContent(null);
+      setAiMeme(null);
+      setAiMotivation(null);
       return;
     }
-    fetchAIContent(currentEmotionId);
+
+    fetchMeme(currentEmotionId, false);
+    fetchMotivation(currentEmotionId, false);
   }, [currentEmotionId, userName, todayTasks.length]);
 
   return (
@@ -196,7 +219,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* 3. AI MEME & MOTIVATION SECTION (If mood is selected) */}
       {emotionConfig && (
         <section className="home-section ai-vibe-grid">
-          {/* AI MEME CARD */}
+          {/* AI MEME CARD (Independent Reload Button) */}
           <div className="ai-card meme-card">
             <div className="card-badge-header">
               <span className="badge-pill meme-pill">
@@ -206,48 +229,59 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <button
                   type="button"
                   className="btn-regen-sm"
-                  onClick={() => fetchAIContent(currentEmotionId, true)}
-                  disabled={isLoadingAI}
-                  title="Generate another vibe"
+                  onClick={() => fetchMeme(currentEmotionId, true)}
+                  disabled={isLoadingMeme}
+                  title="Generate another meme"
                 >
-                  <RefreshCw className={`icon-nano ${isLoadingAI ? 'spin-icon' : ''}`} />
+                  <RefreshCw className={`icon-nano ${isLoadingMeme ? 'spin-icon' : ''}`} />
                 </button>
               </div>
             </div>
 
-            {isLoadingAI ? (
+            {isLoadingMeme ? (
               <div className="ai-loading-placeholder">
                 <RefreshCw className="icon-sm spin-icon text-primary" />
-                <span>Generating custom AI vibe...</span>
+                <span>Generating custom meme vibe...</span>
               </div>
-            ) : aiContent ? (
+            ) : aiMeme ? (
               <div className="meme-content-box">
-                <div className="meme-emoji-hero">{aiContent.meme.emoji}</div>
+                <div className="meme-emoji-hero">{aiMeme.emoji}</div>
                 <div className="meme-text-block">
-                  <div className="meme-setup">{aiContent.meme.setup}</div>
-                  <div className="meme-punchline">{aiContent.meme.punchline}</div>
+                  <div className="meme-setup">{aiMeme.setup}</div>
+                  <div className="meme-punchline">{aiMeme.punchline}</div>
                 </div>
               </div>
             ) : null}
           </div>
 
-          {/* AI MOTIVATION CARD */}
+          {/* AI MOTIVATION CARD (Independent Reload Button) */}
           <div className="ai-card motivation-card">
             <div className="card-badge-header">
               <span className="badge-pill motivation-pill">
                 <Flame className="icon-nano" /> A LITTLE PUSH 🚀
               </span>
+              <div className="flex-align-center gap-2">
+                <button
+                  type="button"
+                  className="btn-regen-sm"
+                  onClick={() => fetchMotivation(currentEmotionId, true)}
+                  disabled={isLoadingMotivation}
+                  title="Generate another motivation quote"
+                >
+                  <RefreshCw className={`icon-nano ${isLoadingMotivation ? 'spin-icon' : ''}`} />
+                </button>
+              </div>
             </div>
 
-            {isLoadingAI ? (
+            {isLoadingMotivation ? (
               <div className="ai-loading-placeholder">
                 <RefreshCw className="icon-sm spin-icon text-primary" />
                 <span>Getting your motivation ready...</span>
               </div>
-            ) : aiContent ? (
+            ) : aiMotivation ? (
               <div className="motivation-content-box">
                 <blockquote className="motivation-quote">
-                  "{aiContent.motivation}"
+                  "{aiMotivation.motivation}"
                 </blockquote>
               </div>
             ) : null}
