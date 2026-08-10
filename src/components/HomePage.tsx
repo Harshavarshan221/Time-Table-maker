@@ -11,17 +11,11 @@ import {
   Bot,
   Layers,
   History,
-  Key,
 } from 'lucide-react';
 import type { Task, CategoryConfig } from '../types/timetable';
 import { getEmotionConfig, type EmotionId, EMOTIONS } from '../constants/emotions';
-import {
-  generateAIMoodContent,
-  getStoredGeminiApiKey,
-  type AIMoodResponse,
-} from '../services/aiMoodService';
+import { generateAIMoodContent, type AIMoodResponse } from '../services/aiMoodService';
 import { EmotionCheckInModal } from './EmotionCheckInModal';
-import { AISettingsModal } from './AISettingsModal';
 import { formatTimeRange, formatDurationLabel } from '../utils/dateUtils';
 import type { User } from 'firebase/auth';
 
@@ -54,14 +48,11 @@ export const HomePage: React.FC<HomePageProps> = ({
   onEditTask,
 }) => {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
-  const [isAISettingsModalOpen, setIsAISettingsModalOpen] = useState(false);
   const [aiContent, setAiContent] = useState<AIMoodResponse | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
 
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Friend';
   const emotionConfig = currentEmotionId ? getEmotionConfig(currentEmotionId) : null;
-
-  const hasApiKey = getStoredGeminiApiKey().length > 0;
 
   // Determine greeting based on current hour
   const currentHour = new Date().getHours();
@@ -127,16 +118,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="hero-right-actions">
-          <button
-            type="button"
-            className={`btn-ai-key-badge ${hasApiKey ? 'connected' : ''}`}
-            onClick={() => setIsAISettingsModalOpen(true)}
-            title="Configure Gemini AI Key"
-          >
-            <Key className="icon-nano" />
-            <span>{hasApiKey ? 'Gemini AI Active' : 'Connect Gemini AI Key'}</span>
-          </button>
-
           <div className="hero-date-badge">
             <Calendar className="icon-xs" />
             <span>{dateFormatted}</span>
@@ -222,24 +203,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <Bot className="icon-nano" /> YOUR DAILY VIBE
               </span>
               <div className="flex-align-center gap-2">
-                {aiContent?.isAIGenerated ? (
-                  <span className="ai-sparkle-tag">✨ Gemini AI</span>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn-connect-ai-sm"
-                    onClick={() => setIsAISettingsModalOpen(true)}
-                  >
-                    <Key className="icon-nano" />
-                    <span>Connect AI Key</span>
-                  </button>
-                )}
                 <button
                   type="button"
                   className="btn-regen-sm"
                   onClick={() => fetchAIContent(currentEmotionId)}
                   disabled={isLoadingAI}
-                  title="Generate another AI vibe"
+                  title="Generate another vibe"
                 >
                   <RefreshCw className={`icon-nano ${isLoadingAI ? 'spin-icon' : ''}`} />
                 </button>
@@ -445,15 +414,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         onClose={() => setIsCheckInModalOpen(false)}
         onSelectEmotion={onSelectEmotion}
         currentEmotionId={currentEmotionId}
-      />
-
-      {/* Gemini AI Key Settings Modal */}
-      <AISettingsModal
-        isOpen={isAISettingsModalOpen}
-        onClose={() => setIsAISettingsModalOpen(false)}
-        onKeySaved={() => {
-          if (currentEmotionId) fetchAIContent(currentEmotionId);
-        }}
       />
     </div>
   );
