@@ -215,6 +215,16 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="hero-right-actions">
+          <button
+            type="button"
+            className="btn-vibe-style-toggle"
+            onClick={() => setIsStyleModalOpen(true)}
+            title="Customize AI Personalization (Meme & Motivation Style)"
+          >
+            <Sliders className="icon-xs" />
+            <span>Customize AI Style</span>
+          </button>
+
           <div className="hero-date-badge">
             <Calendar className="icon-xs" />
             <span>{dateFormatted}</span>
@@ -299,19 +309,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="badge-pill meme-pill">
                 <Bot className="icon-nano" /> YOUR DAILY VIBE
               </span>
-              <div className="flex-align-center gap-3">
-                <button
-                  type="button"
-                  className="btn-vibe-style-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsStyleModalOpen(true);
-                  }}
-                  title="Customize Meme Style"
-                >
-                  <Sliders className="icon-nano" />
-                  <span className="vibe-style-btn-text">Meme Style</span>
-                </button>
+              <div className="flex-align-center gap-2">
                 {rateLimitStatus.isCoolingDown ? (
                   <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
                     <Lock className="icon-nano" />
@@ -363,19 +361,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="badge-pill motivation-pill">
                 <Flame className="icon-nano" /> A LITTLE PUSH 🚀
               </span>
-              <div className="flex-align-center gap-3">
-                <button
-                  type="button"
-                  className="btn-vibe-style-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsStyleModalOpen(true);
-                  }}
-                  title="Customize Motivation Style"
-                >
-                  <Sliders className="icon-nano" />
-                  <span className="vibe-style-btn-text">Motivation Style</span>
-                </button>
+              <div className="flex-align-center gap-2">
                 {rateLimitStatus.isCoolingDown ? (
                   <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
                     <Lock className="icon-nano" />
