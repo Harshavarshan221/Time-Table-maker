@@ -10,8 +10,8 @@ import { CategoryManagerModal } from './components/CategoryManagerModal';
 import { AuthModal } from './components/AuthModal';
 import { GridSettingsModal } from './components/GridSettingsModal';
 import type { GridSettings } from './components/GridSettingsModal';
-import { ViewSwitcher } from './components/ViewSwitcher';
 import type { AppView } from './components/ViewSwitcher';
+import { GlobalNavigation } from './components/GlobalNavigation';
 import { AnalyticsView } from './components/AnalyticsView';
 import type { Task, WeekInfo, CategoryConfig } from './types/timetable';
 import { getWeekInfo } from './utils/dateUtils';
@@ -49,7 +49,7 @@ import {
   saveEmotionToFirestore,
   subscribeToDailyEmotions,
 } from './utils/firestoreStorage';
-import { Calendar, Palette, LogIn, LogOut, CloudCheck, PanelLeft, History, RotateCcw, X, Bell } from 'lucide-react';
+import { Palette, PanelLeft, History, RotateCcw, X, Bell } from 'lucide-react';
 import { TrashHistoryModal } from './components/TrashHistoryModal';
 import type { DeletedTaskRecord } from './components/TrashHistoryModal';
 
@@ -693,105 +693,63 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-container">
-      {/* Header */}
-      <header className="app-header">
-        <div className="header-brand">
-          <div className="brand-logo">
-            <Calendar className="logo-icon" />
-          </div>
-          <div>
-            <h1 className="brand-title">Weekly Timetable</h1>
-            <p className="brand-subtitle">Effortless study & task planner</p>
-          </div>
-        </div>
+      {/* 1. SINGLE UNIFIED GLOBAL NAVIGATION NAVBAR */}
+      <GlobalNavigation
+        activeView={activeView}
+        onViewChange={setActiveView}
+        currentUser={currentUser}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onSignOut={() => signOut(auth)}
+      />
 
-        <ViewSwitcher activeView={activeView} onViewChange={setActiveView} />
-
-        <div className="header-right-actions">
-          {/* User Auth Profile Badge or Sign In button */}
-          {currentUser ? (
-            <div className="user-profile-badge">
-              <div className="user-avatar">
-                {currentUser.photoURL ? (
-                  <img src={currentUser.photoURL} alt={currentUser.displayName || 'User'} />
-                ) : (
-                  <span>{(currentUser.displayName || currentUser.email || 'U')[0].toUpperCase()}</span>
-                )}
-              </div>
-              <div className="user-info-text">
-                <span className="user-name">{currentUser.displayName || currentUser.email}</span>
-                {currentUser.displayName && currentUser.email && (
-                  <span className="user-email-sub">{currentUser.email}</span>
-                )}
-                <span className="cloud-status"><CloudCheck className="icon-nano" /> Cloud Synced</span>
-              </div>
-              <button
-                type="button"
-                className="btn-signout"
-                onClick={() => signOut(auth)}
-                title="Sign Out"
-              >
-                <LogOut className="icon-xs" />
-              </button>
-            </div>
-          ) : (
+      {/* 2. PAGE-SPECIFIC WORKSPACE CONTROLS TOOLBAR (Only shown on Timetable view) */}
+      {activeView === 'grid' && (
+        <div className="timetable-toolbar">
+          <div className="toolbar-left-actions">
             <button
               type="button"
-              className="btn-auth-signin"
-              onClick={() => setIsAuthModalOpen(true)}
+              className="btn-today-tasks-trigger"
+              onClick={() => setIsTodayTasksModalOpen(true)}
+              title="View Today's Scheduled Tasks & Notifications"
             >
-              <LogIn className="icon-xs" />
-              <span>Sign In / Sync</span>
+              <Bell className="icon-xs" />
+              <span>Today's Schedule</span>
+              {todayTasks.length > 0 && (
+                <span className="today-tasks-count-badge">{todayTasks.length}</span>
+              )}
             </button>
-          )}
 
-          {/* Today's Tasks & Reminders Popup Trigger */}
-          <button
-            type="button"
-            className="btn-today-tasks-trigger"
-            onClick={() => setIsTodayTasksModalOpen(true)}
-            title="View Today's Scheduled Tasks & Notifications"
-          >
-            <Bell className="icon-xs" />
-            <span>Today's Schedule</span>
-            {todayTasks.length > 0 && (
-              <span className="today-tasks-count-badge">{todayTasks.length}</span>
-            )}
-          </button>
+            <button
+              type="button"
+              className="btn-categories-trigger"
+              onClick={() => setIsCategoryManagerOpen(true)}
+              title="Manage categories and colors"
+            >
+              <Palette className="icon-xs" />
+              <span>Categories</span>
+            </button>
 
-          <button
-            type="button"
-            className="btn-categories-trigger"
-            onClick={() => setIsCategoryManagerOpen(true)}
-            title="Manage categories and colors"
-          >
-            <Palette className="icon-xs" />
-            <span>Categories</span>
-          </button>
+            <button
+              type="button"
+              className="btn-trash-trigger"
+              onClick={() => setIsTrashModalOpen(true)}
+              title="View Trash History & Restore Tasks"
+            >
+              <History className="icon-xs" />
+              <span>Trash / History</span>
+              {deletedTasksHistory.length > 0 && (
+                <span className="trash-badge-count">{deletedTasksHistory.length}</span>
+              )}
+            </button>
+          </div>
 
-          {/* History & Trash Recovery Trigger */}
-          <button
-            type="button"
-            className="btn-trash-trigger"
-            onClick={() => setIsTrashModalOpen(true)}
-            title="View Trash History & Restore Tasks"
-          >
-            <History className="icon-xs" />
-            <span>Trash / History</span>
-            {deletedTasksHistory.length > 0 && (
-              <span className="trash-badge-count">{deletedTasksHistory.length}</span>
-            )}
-          </button>
-
-          {activeView === 'grid' && (
-            <WeekSelector
-              currentWeekInfo={currentWeekInfo}
-              selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
-            />
-          )}
+          <WeekSelector
+            currentWeekInfo={currentWeekInfo}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
         </div>
-      </header>
+      )}
 
       {/* Main Content View */}
       {activeView === 'home' && (

@@ -29,7 +29,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
         title="View Weekly Calendar Timetable"
       >
         <Calendar className="icon-xs" />
-        <span>Timetable Grid</span>
+        <span>Timetable</span>
       </button>
 
       <button
