@@ -52,8 +52,8 @@ export const CustomVibeModal: React.FC<CustomVibeModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container custom-vibe-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-content custom-vibe-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="flex-align-center gap-2">
             <div className="modal-icon-badge bg-purple">
@@ -64,7 +64,7 @@ export const CustomVibeModal: React.FC<CustomVibeModalProps> = ({
               <p className="modal-subtitle">Tell Gemini how you want your quotes and motivation to sound!</p>
             </div>
           </div>
-          <button type="button" className="btn-icon-close" onClick={onClose}>
+          <button type="button" className="btn-modal-close" onClick={onClose}>
             <X className="icon-xs" />
           </button>
         </div>

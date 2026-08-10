@@ -2907,13 +2907,15 @@ body {
 .btn-vibe-style-sm {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 28px;
+  gap: 5px;
+  padding: 4px 10px;
   height: 28px;
   border-radius: var(--radius-sm);
   background-color: #F3E8FF;
   border: 1px solid #D8B4FE;
   color: #7E22CE;
+  font-size: 0.72rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -2921,6 +2923,11 @@ body {
 .btn-vibe-style-sm:hover {
   background-color: #E9D5FF;
   color: #6B21A8;
+}
+
+.custom-vibe-modal {
+  max-width: 520px;
+  width: 90%;
 }
 
 .vibe-preset-grid {

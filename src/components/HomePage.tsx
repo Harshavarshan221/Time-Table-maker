@@ -312,14 +312,18 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="badge-pill meme-pill">
                 <Bot className="icon-nano" /> YOUR DAILY VIBE
               </span>
-              <div className="flex-align-center gap-2">
+              <div className="flex-align-center gap-3">
                 <button
                   type="button"
                   className="btn-vibe-style-sm"
-                  onClick={() => setIsCustomVibeModalOpen(true)}
-                  title="Change AI quote style/prompt"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCustomVibeModalOpen(true);
+                  }}
+                  title="Change AI quote style & tone"
                 >
                   <Sliders className="icon-nano" />
+                  <span className="vibe-style-btn-text">Style</span>
                 </button>
                 {rateLimitStatus.isCoolingDown ? (
                   <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
@@ -372,14 +376,18 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="badge-pill motivation-pill">
                 <Flame className="icon-nano" /> A LITTLE PUSH 🚀
               </span>
-              <div className="flex-align-center gap-2">
+              <div className="flex-align-center gap-3">
                 <button
                   type="button"
                   className="btn-vibe-style-sm"
-                  onClick={() => setIsCustomVibeModalOpen(true)}
-                  title="Change AI quote style/prompt"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCustomVibeModalOpen(true);
+                  }}
+                  title="Change AI quote style & tone"
                 >
                   <Sliders className="icon-nano" />
+                  <span className="vibe-style-btn-text">Style</span>
                 </button>
                 {rateLimitStatus.isCoolingDown ? (
                   <span className="cooldown-pill-btn" title="Cooldown active (10 requests/min limit reached)">
