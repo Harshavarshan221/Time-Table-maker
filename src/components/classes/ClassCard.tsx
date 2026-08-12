@@ -8,6 +8,7 @@ interface ClassCardProps {
   hourHeightPx: number;
   onUpdateStatus: (classId: string, status: ClassStatus) => void;
   onDeleteClass: (classId: string) => void;
+  onDuplicateClass?: (classItem: ClassItem) => void;
 }
 
 export const ClassCard: React.FC<ClassCardProps> = ({
@@ -16,6 +17,7 @@ export const ClassCard: React.FC<ClassCardProps> = ({
   hourHeightPx,
   onUpdateStatus,
   onDeleteClass,
+  onDuplicateClass,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
@@ -96,6 +98,7 @@ export const ClassCard: React.FC<ClassCardProps> = ({
           classItem={classItem}
           onSelectStatus={(status) => onUpdateStatus(classItem.id, status)}
           onDeleteClass={() => onDeleteClass(classItem.id)}
+          onDuplicateClass={onDuplicateClass ? () => onDuplicateClass(classItem) : undefined}
           onClose={() => setIsPopoverOpen(false)}
         />
       )}

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { X, GraduationCap, Calendar, Clock, Repeat, Sparkles } from 'lucide-react';
 import type { ClassItem } from '../../types/classes';
 
+import { toISODateString, parseISODateString } from '../../utils/dateUtils';
+
 interface ClassModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,7 +31,7 @@ export const ClassModal: React.FC<ClassModalProps> = ({
   selectedDate,
   onCreateClass,
 }) => {
-  const defaultDateStr = selectedDate.toISOString().split('T')[0];
+  const defaultDateStr = toISODateString(selectedDate);
   const defaultWeekday = (selectedDate.getDay() + 6) % 7; // 0 = Mon, ..., 6 = Sun
 
   const [name, setName] = useState('');
@@ -105,9 +107,11 @@ export const ClassModal: React.FC<ClassModalProps> = ({
                   value={dateStr}
                   onChange={(e) => {
                     setDateStr(e.target.value);
-                    const d = new Date(e.target.value);
-                    if (!isNaN(d.getTime())) {
-                      setRepeatWeekday((d.getDay() + 6) % 7);
+                    if (e.target.value) {
+                      const d = parseISODateString(e.target.value);
+                      if (!isNaN(d.getTime())) {
+                        setRepeatWeekday((d.getDay() + 6) % 7);
+                      }
                     }
                   }}
                   required

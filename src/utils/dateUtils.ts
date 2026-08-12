@@ -14,13 +14,24 @@ export function getMonday(date: Date): Date {
 }
 
 /**
- * Format date into ISO YYYY-MM-DD.
+ * Format date into ISO YYYY-MM-DD (using local year/month/date).
  */
 export function toISODateString(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/**
+ * Safely parse ISO YYYY-MM-DD string into a Local Date object at 00:00:00 local time.
+ * Prevents UTC timezone shift bug.
+ */
+export function parseISODateString(isoStr: string): Date {
+  if (!isoStr) return new Date();
+  const [year, month, day] = isoStr.split('-').map(Number);
+  if (!year || !month || !day) return new Date();
+  return new Date(year, month - 1, day);
 }
 
 /**

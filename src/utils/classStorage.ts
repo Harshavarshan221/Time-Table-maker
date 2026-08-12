@@ -1,4 +1,5 @@
 import type { ClassItem, ClassStatus } from '../types/classes';
+import { toISODateString, parseISODateString } from './dateUtils';
 
 const LOCAL_STORAGE_KEY = 'timetable.app.cls.v1';
 
@@ -39,7 +40,7 @@ export function getWeekdayDatesInMonth(targetDate: Date, weekday: number): strin
     const convertedDay = (jsDay + 6) % 7;
     
     if (convertedDay === weekday) {
-      const iso = date.toISOString().split('T')[0];
+      const iso = toISODateString(date);
       dates.push(iso);
     }
     date.setDate(date.getDate() + 1);
@@ -59,7 +60,7 @@ export function createClassWithRepeat(
   const existingClasses = loadAllClasses();
   const created: ClassItem[] = [];
 
-  const baseDate = new Date(baseClass.dateStr);
+  const baseDate = parseISODateString(baseClass.dateStr);
 
   if (repeatThisMonth && repeatWeekday !== undefined) {
     const dates = getWeekdayDatesInMonth(baseDate, repeatWeekday);
@@ -106,7 +107,10 @@ export function updateClassStatus(classId: string, status: ClassStatus): ClassIt
 
 export function updateClassItem(updatedItem: ClassItem): ClassItem[] {
   const classes = loadAllClasses();
-  const updated = classes.map((c) => (c.id === updatedItem.id ? updatedItem : c));
+  const exists = classes.some((c) => c.id === updatedItem.id);
+  const updated = exists
+    ? classes.map((c) => (c.id === updatedItem.id ? updatedItem : c))
+    : [...classes, updatedItem];
   saveAllClasses(updated);
   return updated;
 }

@@ -1,11 +1,11 @@
-import React from 'react';
-import { CheckCircle2, XCircle, AlertCircle, Clock, Trash2, X } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Clock, Trash2, X, Copy } from 'lucide-react';
 import type { ClassItem, ClassStatus } from '../../types/classes';
 
 interface ClassStatusPopoverProps {
   classItem: ClassItem;
   onSelectStatus: (status: ClassStatus) => void;
   onDeleteClass: () => void;
+  onDuplicateClass?: () => void;
   onClose: () => void;
 }
 
@@ -13,6 +13,7 @@ export const ClassStatusPopover: React.FC<ClassStatusPopoverProps> = ({
   classItem,
   onSelectStatus,
   onDeleteClass,
+  onDuplicateClass,
   onClose,
 }) => {
   return (
@@ -85,7 +86,22 @@ export const ClassStatusPopover: React.FC<ClassStatusPopoverProps> = ({
           </div>
         </div>
 
-        <div className="popover-footer">
+        <div className="popover-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {onDuplicateClass && (
+            <button
+              type="button"
+              className="btn-duplicate-class-action"
+              onClick={() => {
+                onDuplicateClass();
+                onClose();
+              }}
+              title="Duplicate Class"
+            >
+              <Copy className="icon-nano text-purple" />
+              <span>Duplicate</span>
+            </button>
+          )}
+
           <button
             type="button"
             className="btn-delete-class-action"
@@ -95,7 +111,7 @@ export const ClassStatusPopover: React.FC<ClassStatusPopoverProps> = ({
             }}
           >
             <Trash2 className="icon-nano text-red" />
-            <span>Delete Class</span>
+            <span>Delete</span>
           </button>
         </div>
       </div>

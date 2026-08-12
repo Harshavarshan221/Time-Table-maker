@@ -149,6 +149,17 @@ export const App: React.FC = () => {
     setClasses(updated);
   };
 
+  const handleDuplicateClass = (cls: ClassItem) => {
+    const newClass: ClassItem = {
+      ...cls,
+      id: `cls_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      status: 'scheduled', // Always start as white / unmarked
+    };
+    const updated = updateClassItem(newClass);
+    setClasses(updated);
+    setToastNotification({ message: `Duplicated "${cls.name}"` });
+  };
+
   const handleDropClass = (
     classId: string,
     targetIsoDate: string,
@@ -158,9 +169,14 @@ export const App: React.FC = () => {
     const targetClass = classes.find((c) => c.id === classId) || rawClassData;
     if (!targetClass) return;
 
-    const [sH, sM] = targetClass.startTime.split(':').map(Number);
-    const [eH, eM] = targetClass.endTime.split(':').map(Number);
-    const durationMins = Math.max(15, (eH * 60 + eM) - (sH * 60 + sM));
+    let durationMins = 60;
+    if (targetClass.startTime && targetClass.endTime) {
+      const [sH, sM] = targetClass.startTime.split(':').map(Number);
+      const [eH, eM] = targetClass.endTime.split(':').map(Number);
+      if (!isNaN(sH) && !isNaN(eH)) {
+        durationMins = Math.max(15, (eH * 60 + eM) - (sH * 60 + sM));
+      }
+    }
 
     const [nH, nM] = newStartTime.split(':').map(Number);
     const newStartMinsTotal = nH * 60 + nM;
@@ -182,7 +198,7 @@ export const App: React.FC = () => {
 
     const updatedClasses = updateClassItem(updatedClass);
     setClasses(updatedClasses);
-    setToastNotification({ message: `Rescheduled "${targetClass.name}" to ${newStartTime}` });
+    setToastNotification({ message: `Scheduled "${targetClass.name}" to ${newStartTime}` });
   };
 
   // CTR Handlers
@@ -895,11 +911,15 @@ export const App: React.FC = () => {
           {isSidebarOpen ? (
             <UnscheduledTasks
               tasks={unscheduledTasks}
+              classes={classes}
               categories={categories}
               onAddTaskClick={handleOpenCreateModal}
+              onAddClassClick={() => setIsClassModalOpen(true)}
               onDeleteTask={handleDeleteTask}
               onEditTask={handleOpenEditModal}
               onDuplicateTask={handleDuplicateTask}
+              onDeleteClass={handleDeleteClass}
+              onDuplicateClass={handleDuplicateClass}
               onToggleSidebar={() => setIsSidebarOpen(false)}
             />
           ) : (
@@ -907,10 +927,10 @@ export const App: React.FC = () => {
               type="button"
               className="btn-expand-tasks-floating"
               onClick={() => setIsSidebarOpen(true)}
-              title="Show Tasks Sidebar"
+              title="Show Sidebar"
             >
               <PanelLeft className="icon-sm" />
-              <span>Show Tasks ({unscheduledTasks.length})</span>
+              <span>Show Sidebar ({unscheduledTasks.length + classes.filter(c => !c.dateStr).length})</span>
             </button>
           )}
 
@@ -933,6 +953,7 @@ export const App: React.FC = () => {
               onOpenGridSettings={() => setIsGridSettingsModalOpen(true)}
               onUpdateClassStatus={handleUpdateClassStatus}
               onDeleteClass={handleDeleteClass}
+              onDuplicateClass={handleDuplicateClass}
               onSelectDate={setSelectedDate}
               onUpdateCTRValue={handleUpdateCTRValue}
               onIncrementCTR={handleIncrementCTR}

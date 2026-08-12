@@ -37,6 +37,7 @@ interface TimetableGridProps {
   onOpenGridSettings?: () => void;
   onUpdateClassStatus?: (classId: string, status: ClassStatus) => void;
   onDeleteClass?: (classId: string) => void;
+  onDuplicateClass?: (classItem: ClassItem) => void;
   onSelectDate?: (date: Date) => void;
   onUpdateCTRValue?: (ctrId: string, dateStr: string, val: number) => void;
   onIncrementCTR?: (ctrId: string, dateStr: string, delta: number) => void;
@@ -61,6 +62,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   onOpenGridSettings,
   onUpdateClassStatus,
   onDeleteClass,
+  onDuplicateClass,
   onSelectDate,
   onUpdateCTRValue,
   onIncrementCTR,
@@ -264,6 +266,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                     hourHeightPx={hourHeightPx}
                     onUpdateStatus={onUpdateClassStatus || (() => {})}
                     onDeleteClass={onDeleteClass || (() => {})}
+                    onDuplicateClass={onDuplicateClass}
                   />
                 ))}
               </div>
