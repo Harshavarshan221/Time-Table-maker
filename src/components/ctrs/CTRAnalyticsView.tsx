@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import type { CTRItem } from '../../types/ctrs';
-import { BarChart2, TrendingUp, Award, Calendar, Hash } from 'lucide-react';
+import { BarChart2, TrendingUp, Award, Calendar, Hash, PlusCircle } from 'lucide-react';
 
 interface CTRAnalyticsViewProps {
   ctrs: CTRItem[];
+  onOpenCreateCTRModal?: () => void;
 }
 
-export const CTRAnalyticsView: React.FC<CTRAnalyticsViewProps> = ({ ctrs }) => {
+export const CTRAnalyticsView: React.FC<CTRAnalyticsViewProps> = ({
+  ctrs,
+  onOpenCreateCTRModal,
+}) => {
   const [selectedCTRId, setSelectedCTRId] = useState<string>(() =>
     ctrs.length > 0 ? ctrs[0].id : 'all'
   );
@@ -24,7 +28,7 @@ export const CTRAnalyticsView: React.FC<CTRAnalyticsViewProps> = ({ ctrs }) => {
 
   const activeCTR = ctrs.find((c) => c.id === selectedCTRId);
 
-  // Compute stats for selected CTR or All
+  // Compute values for days
   let valuesForDays: { dateStr: string; label: string; count: number }[] = [];
 
   if (activeCTR) {
@@ -41,49 +45,65 @@ export const CTRAnalyticsView: React.FC<CTRAnalyticsViewProps> = ({ ctrs }) => {
   }
 
   const totalCount = valuesForDays.reduce((acc, v) => acc + v.count, 0);
-  const avgCount = valuesForDays.length > 0 ? (totalCount / valuesForDays.length).toFixed(1) : '0';
+  const avgCount = valuesForDays.length > 0 ? (totalCount / valuesForDays.length).toFixed(1) : '0.0';
   
   const countsArray = valuesForDays.map((v) => v.count);
-  const maxCount = Math.max(...countsArray, 1);
+  const highestDayCount = countsArray.length > 0 ? Math.max(...countsArray, 0) : 0;
 
   const todayStr = new Date().toISOString().split('T')[0];
   const todayCount = valuesForDays.find((v) => v.dateStr === todayStr)?.count || 0;
 
   return (
     <div className="ctr-analytics-container">
-      {/* Selector Header Bar */}
-      <div className="ctr-analytics-header-bar">
-        <div className="flex-align-center gap-2">
-          <Hash className="icon-sm text-purple" />
-          <h3 className="section-title">Counter Performance & Trends</h3>
-        </div>
-
-        <div className="ctr-selector-dropdown-box">
-          <label className="dropdown-label">Select Counter:</label>
-          <select
-            className="form-select ctr-select-input"
-            value={selectedCTRId}
-            onChange={(e) => setSelectedCTRId(e.target.value)}
-          >
-            <option value="all">📊 Compare All Counters</option>
-            {ctrs.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
       {ctrs.length === 0 ? (
-        <div className="empty-analytics-box margin-top-20">
-          <Calendar className="empty-icon" />
-          <p className="empty-title">No counters created yet</p>
-          <p className="empty-sub">Create CTR metrics to track daily numerical progress!</p>
+        <div className="empty-analytics-box card-styled margin-top-20 text-center padding-32">
+          <div className="empty-icon-wrapper bg-purple">
+            <Hash className="icon-lg text-purple" />
+          </div>
+          <h3 className="empty-title margin-top-12">No daily counters created yet</h3>
+          <p className="empty-sub">
+            Create a CTR to track daily numerical metrics like DSA questions, pushups, pages read, etc.
+          </p>
+          {onOpenCreateCTRModal && (
+            <button
+              type="button"
+              className="btn-primary btn-md margin-top-16 inline-flex-center gap-2"
+              onClick={onOpenCreateCTRModal}
+            >
+              <PlusCircle className="icon-xs" />
+              <span>Create First CTR</span>
+            </button>
+          )}
         </div>
       ) : (
         <>
-          {/* Summary Stat Cards */}
+          {/* Top Bar with Card Title & Dropdown Selector */}
+          <div className="analytics-header-card padding-16 border-rounded bg-white shadow-sm margin-bottom-16">
+            <div className="ctr-analytics-header-bar">
+              <div className="flex-align-center gap-2">
+                <Hash className="icon-sm text-purple" />
+                <h3 className="section-title">Counter Performance & Trends</h3>
+              </div>
+
+              <div className="ctr-selector-dropdown-box flex-align-center gap-2">
+                <label className="dropdown-label font-bold text-secondary">Select Counter:</label>
+                <select
+                  className="form-select ctr-select-input font-bold"
+                  value={selectedCTRId}
+                  onChange={(e) => setSelectedCTRId(e.target.value)}
+                >
+                  <option value="all">📊 Compare All Counters</option>
+                  {ctrs.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Summary Stat Cards */}
           <div className="analytics-summary-grid margin-top-16">
             <div className="summary-card card-purple">
               <div className="card-icon-wrapper">
@@ -113,7 +133,7 @@ export const CTRAnalyticsView: React.FC<CTRAnalyticsViewProps> = ({ ctrs }) => {
               </div>
               <div className="card-info">
                 <span className="card-label">Highest Day</span>
-                <span className="card-value font-bold">{maxCount}</span>
+                <span className="card-value font-bold">{highestDayCount}</span>
                 <span className="card-sub">Peak single-day score</span>
               </div>
             </div>
@@ -145,9 +165,19 @@ export const CTRAnalyticsView: React.FC<CTRAnalyticsViewProps> = ({ ctrs }) => {
             </div>
 
             <div className="ctr-bar-chart-wrapper">
+              {highestDayCount === 0 && (
+                <div className="chart-no-activity-notice">
+                  <span>No count activity recorded in this 14-day period</span>
+                </div>
+              )}
+
               <div className="chart-bars-container">
                 {valuesForDays.map((d) => {
-                  const heightPercent = Math.max(6, Math.round((d.count / maxCount) * 100));
+                  const heightPercent =
+                    highestDayCount > 0
+                      ? Math.round((d.count / highestDayCount) * 100)
+                      : 0;
+
                   const isToday = d.dateStr === todayStr;
 
                   return (

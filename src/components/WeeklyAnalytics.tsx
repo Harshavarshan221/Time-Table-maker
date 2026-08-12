@@ -5,6 +5,7 @@ import {
   formatWeekRange,
   formatTimeRange,
   toISODateString,
+  isAnalyticsEligible,
 } from '../utils/dateUtils';
 import {
   Clock,
@@ -37,6 +38,8 @@ export const WeeklyAnalytics: React.FC<WeeklyAnalyticsProps> = ({
     y: number;
   } | null>(null);
 
+  const now = new Date();
+
   const handlePrevWeek = () => {
     const prev = new Date(currentWeekInfo.mondayDate);
     prev.setDate(prev.getDate() - 7);
@@ -58,7 +61,7 @@ export const WeeklyAnalytics: React.FC<WeeklyAnalyticsProps> = ({
       if (typeof dateInputRef.current.showPicker === 'function') {
         dateInputRef.current.showPicker();
       } else {
-        dateInputRef.current.click();
+        dateInputRef.current.focus();
       }
     }
   };
@@ -71,7 +74,16 @@ export const WeeklyAnalytics: React.FC<WeeklyAnalyticsProps> = ({
   };
 
   // Filter tasks for current visible week
-  const weekTasks = scheduledTasks.filter((t) => t.weekId === currentWeekInfo.weekId);
+  const rawWeekTasks = scheduledTasks.filter((t) => t.weekId === currentWeekInfo.weekId);
+
+  // Eligible tasks for past/current performance calculations
+  const weekTasks = rawWeekTasks.filter((t) => {
+    const day = currentWeekInfo.days.find((d) => d.dayIndex === t.dayOfWeek);
+    const isoDate = day ? day.isoDate : currentWeekInfo.weekId;
+    return isAnalyticsEligible(isoDate, t.startTime, t.durationMinutes, 4, now);
+  });
+
+  const futureWeekTasksCount = rawWeekTasks.length - weekTasks.length;
 
   // Compute metrics
   const totalMinutes = weekTasks.reduce((sum, t) => sum + t.durationMinutes, 0);
@@ -152,6 +164,15 @@ export const WeeklyAnalytics: React.FC<WeeklyAnalyticsProps> = ({
           </div>
         </div>
       </div>
+
+      {futureWeekTasksCount > 0 && (
+        <div className="future-items-notice-banner margin-bottom-16">
+          <CalendarIcon className="icon-xs text-blue" />
+          <span>
+            <strong>{futureWeekTasksCount} upcoming tasks</strong> are scheduled for future dates/times and are excluded from past productivity calculations.
+          </span>
+        </div>
+      )}
 
       {/* Summary KPI Cards */}
       <div className="analytics-kpi-grid">

@@ -18,6 +18,8 @@ interface AnalyticsViewProps {
   ctrs: CTRItem[];
   categories: CategoryConfig[];
   onDateChange: (newDate: Date) => void;
+  onNavigateToGrid?: () => void;
+  onOpenCreateCTRModal?: () => void;
 }
 
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
@@ -27,6 +29,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   ctrs,
   categories,
   onDateChange,
+  onNavigateToGrid,
+  onOpenCreateCTRModal,
 }) => {
   const [mainCategory, setMainCategory] = useState<MainAnalyticsCategory>('tasks');
   const [taskScope, setTaskScope] = useState<TaskAnalyticsScope>('weekly');
@@ -67,9 +71,9 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
 
       {/* 2. RENDER SELECTED ANALYTICS SYSTEM */}
       {mainCategory === 'classes' ? (
-        <ClassAnalyticsView classes={classes} />
+        <ClassAnalyticsView classes={classes} onNavigateToGrid={onNavigateToGrid} />
       ) : mainCategory === 'ctrs' ? (
-        <CTRAnalyticsView ctrs={ctrs} />
+        <CTRAnalyticsView ctrs={ctrs} onOpenCreateCTRModal={onOpenCreateCTRModal} />
       ) : (
         <div className="task-analytics-wrapper">
           {/* Sub-Header for Tasks: Weekly vs Monthly */}

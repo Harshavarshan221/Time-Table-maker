@@ -65,6 +65,7 @@ import {
   createCTR,
   updateCTRValue,
   incrementCTRValue,
+  updateCTRDefinition,
   deleteCTR,
 } from './utils/ctrStorage';
 import { Palette, PanelLeft, History, RotateCcw, X, Bell } from 'lucide-react';
@@ -150,6 +151,11 @@ export const App: React.FC = () => {
   // CTR Handlers
   const handleCreateCTR = (name: string, colorHex: string) => {
     const updated = createCTR(name, colorHex);
+    setCtrs(updated);
+  };
+
+  const handleSaveCTRDefinition = (ctrId: string, name: string, colorHex: string) => {
+    const updated = updateCTRDefinition(ctrId, name, colorHex);
     setCtrs(updated);
   };
 
@@ -848,6 +854,7 @@ export const App: React.FC = () => {
           onUpdateCTRValue={handleUpdateCTRValue}
           onIncrementCTR={handleIncrementCTR}
           onOpenCreateCTRModal={() => setIsCTRModalOpen(true)}
+          onSaveCTRDefinition={handleSaveCTRDefinition}
           onDeleteCTR={handleDeleteCTR}
         />
       )}
@@ -905,6 +912,8 @@ export const App: React.FC = () => {
           ctrs={ctrs}
           categories={categories}
           onDateChange={setSelectedDate}
+          onNavigateToGrid={() => setActiveView('grid')}
+          onOpenCreateCTRModal={() => setIsCTRModalOpen(true)}
         />
       )}
 

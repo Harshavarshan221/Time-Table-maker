@@ -4268,6 +4268,46 @@ body {
   font-weight: 800;
 }
 
+.future-items-notice-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  color: #1E40AF;
+}
+
+.chart-no-activity-notice {
+  text-align: center;
+  padding: 12px;
+  background-color: #F8FAFC;
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.confirm-delete-alert-box {
+  padding: 12px;
+  background-color: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  border-radius: var(--radius-md);
+}
+
+.confirm-text {
+  font-size: 0.85rem;
+}
+
+.confirm-sub {
+  font-size: 0.72rem;
+  margin-top: 2px;
+}
+
 
 @media (max-width: 768px) {
   .compact-task-item {

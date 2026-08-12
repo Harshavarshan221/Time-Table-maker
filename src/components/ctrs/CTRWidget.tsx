@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { CTRItem } from '../../types/ctrs';
-import { Minus, Plus, Hash, PlusCircle, Trash2 } from 'lucide-react';
+import { CTREditModal } from './CTREditModal';
+import { Minus, Plus, Hash, PlusCircle, Settings } from 'lucide-react';
 
 interface CTRWidgetProps {
   ctrs: CTRItem[];
@@ -8,6 +9,7 @@ interface CTRWidgetProps {
   onUpdateValue: (ctrId: string, dateStr: string, val: number) => void;
   onIncrement: (ctrId: string, dateStr: string, delta: number) => void;
   onOpenCreateCTRModal: () => void;
+  onSaveCTRDefinition?: (ctrId: string, name: string, colorHex: string) => void;
   onDeleteCTR: (ctrId: string) => void;
 }
 
@@ -17,8 +19,11 @@ export const CTRWidget: React.FC<CTRWidgetProps> = ({
   onUpdateValue,
   onIncrement,
   onOpenCreateCTRModal,
+  onSaveCTRDefinition,
   onDeleteCTR,
 }) => {
+  const [editingCTR, setEditingCTR] = useState<CTRItem | null>(null);
+
   return (
     <div className="ctr-widget-container">
       <div className="ctr-widget-header">
@@ -71,20 +76,21 @@ export const CTRWidget: React.FC<CTRWidgetProps> = ({
                     type="button"
                     className="ctr-btn btn-minus"
                     onClick={() => onIncrement(c.id, selectedDateStr, -1)}
-                    title="Decrease count"
+                    title="Decrease count (Min: 0)"
                   >
                     <Minus className="icon-nano" />
                   </button>
 
                   <input
                     type="number"
-                    className="ctr-count-input"
+                    className="ctr-count-input font-bold"
                     value={count}
                     onChange={(e) => {
                       const val = parseInt(e.target.value, 10);
-                      onUpdateValue(c.id, selectedDateStr, isNaN(val) ? 0 : val);
+                      onUpdateValue(c.id, selectedDateStr, isNaN(val) ? 0 : Math.max(0, val));
                     }}
                     min={0}
+                    title="Click to edit value directly"
                   />
 
                   <button
@@ -99,10 +105,10 @@ export const CTRWidget: React.FC<CTRWidgetProps> = ({
                   <button
                     type="button"
                     className="btn-delete-ctr-nano"
-                    onClick={() => onDeleteCTR(c.id)}
-                    title="Delete counter"
+                    onClick={() => setEditingCTR(c)}
+                    title="Edit counter settings or delete"
                   >
-                    <Trash2 className="icon-nano text-muted" />
+                    <Settings className="icon-nano text-muted" />
                   </button>
                 </div>
               </div>
@@ -110,6 +116,21 @@ export const CTRWidget: React.FC<CTRWidgetProps> = ({
           })}
         </div>
       )}
+
+      {/* Edit CTR Modal */}
+      <CTREditModal
+        isOpen={!!editingCTR}
+        ctrToEdit={editingCTR}
+        onClose={() => setEditingCTR(null)}
+        onSave={(id, name, color) => {
+          if (onSaveCTRDefinition) onSaveCTRDefinition(id, name, color);
+          setEditingCTR(null);
+        }}
+        onDelete={(id) => {
+          onDeleteCTR(id);
+          setEditingCTR(null);
+        }}
+      />
     </div>
   );
 };

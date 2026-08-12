@@ -1,10 +1,10 @@
 import React from 'react';
-import { X, CheckSquare, GraduationCap, Hash, Sparkles } from 'lucide-react';
+import { X, CheckSquare, GraduationCap, Sparkles } from 'lucide-react';
 
 interface CreateItemPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectType: (type: 'task' | 'class' | 'ctr') => void;
+  onSelectType: (type: 'task' | 'class') => void;
 }
 
 export const CreateItemPickerModal: React.FC<CreateItemPickerModalProps> = ({
@@ -66,24 +66,6 @@ export const CreateItemPickerModal: React.FC<CreateItemPickerModalProps> = ({
             <div className="picker-info-text">
               <span className="picker-title font-bold">Class / Lecture</span>
               <span className="picker-desc">College lecture or class to attend (tracks attendance %)</span>
-            </div>
-          </button>
-
-          {/* CTR COUNTER OPTION */}
-          <button
-            type="button"
-            className="picker-card-option option-ctr"
-            onClick={() => {
-              onSelectType('ctr');
-              onClose();
-            }}
-          >
-            <div className="picker-icon-badge bg-green">
-              <Hash className="icon-sm text-green" />
-            </div>
-            <div className="picker-info-text">
-              <span className="picker-title font-bold">Daily Counter (CTR)</span>
-              <span className="picker-desc">Numeric goal to count daily (Pushups, LeetCode, Pages Read)</span>
             </div>
           </button>
         </div>

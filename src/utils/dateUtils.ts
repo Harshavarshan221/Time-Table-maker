@@ -244,3 +244,79 @@ export function isSameDay(d1: Date, d2: Date): boolean {
   );
 }
 
+/**
+ * Converts a timetable slot date string ("YYYY-MM-DD") and time string ("HH:mm")
+ * into its true, exact chronological Date object based on gridStartHour boundary.
+ *
+ * Example:
+ * If timetable start is 8:00 AM (or 4:00 AM), and slot is 04:00 AM under Wednesday's timetable,
+ * because 4 < 8 (or 1 < 4), it belongs chronologically to Thursday 04:00 AM.
+ */
+export function getLogicalStartDateTime(
+  isoDateStr: string,
+  timeStr: string = '00:00',
+  gridStartHour: number = 4
+): Date {
+  const [year, month, day] = isoDateStr.split('-').map(Number);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+
+  const dt = new Date(year, (month || 1) - 1, day || 1, hours || 0, minutes || 0, 0, 0);
+
+  // If slot hours is less than gridStartHour, it belongs to the next calendar date chronologically
+  if ((hours || 0) < gridStartHour) {
+    dt.setDate(dt.getDate() + 1);
+  }
+
+  return dt;
+}
+
+export type TemporalState = 'PAST' | 'CURRENT' | 'FUTURE';
+
+/**
+ * Returns whether a scheduled item is chronologically PAST, CURRENT, or FUTURE.
+ */
+export function getTemporalState(
+  isoDateStr: string,
+  startTimeStr?: string,
+  durationMinutes: number = 60,
+  gridStartHour: number = 4,
+  now: Date = new Date()
+): TemporalState {
+  if (!startTimeStr) {
+    // If no start time, compare date boundary
+    const [y, m, d] = isoDateStr.split('-').map(Number);
+    const itemDate = new Date(y, m - 1, d, 23, 59, 59);
+    if (now > itemDate) return 'PAST';
+    if (toISODateString(now) === isoDateStr) return 'CURRENT';
+    return 'FUTURE';
+  }
+
+  const startDt = getLogicalStartDateTime(isoDateStr, startTimeStr, gridStartHour);
+  const endDt = new Date(startDt.getTime() + durationMinutes * 60 * 1000);
+
+  if (now < startDt) {
+    return 'FUTURE';
+  }
+  if (now >= startDt && now <= endDt) {
+    return 'CURRENT';
+  }
+  return 'PAST';
+}
+
+/**
+ * Helper to check if a scheduled item is eligible for historical performance analytics.
+ * Returns true ONLY if the item's logical start time has already occurred (PAST or CURRENT).
+ * FUTURE items return false (FUTURE != MISSED).
+ */
+export function isAnalyticsEligible(
+  isoDateStr: string,
+  startTimeStr?: string,
+  durationMinutes: number = 60,
+  gridStartHour: number = 4,
+  now: Date = new Date()
+): boolean {
+  const state = getTemporalState(isoDateStr, startTimeStr, durationMinutes, gridStartHour, now);
+  return state === 'PAST' || state === 'CURRENT';
+}
+
+

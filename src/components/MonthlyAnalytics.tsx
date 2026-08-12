@@ -5,6 +5,7 @@ import {
   formatMonthYear,
   getWeeksInMonth,
   toISODateString,
+  isAnalyticsEligible,
 } from '../utils/dateUtils';
 import {
   Clock,
@@ -28,6 +29,7 @@ export const MonthlyAnalytics: React.FC<MonthlyAnalyticsProps> = ({
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const now = new Date();
 
   const [hoveredSegment, setHoveredSegment] = useState<{
     weekLabel: string;
@@ -61,7 +63,7 @@ export const MonthlyAnalytics: React.FC<MonthlyAnalyticsProps> = ({
       if (typeof dateInputRef.current.showPicker === 'function') {
         dateInputRef.current.showPicker();
       } else {
-        dateInputRef.current.click();
+        dateInputRef.current.focus();
       }
     }
   };
@@ -77,9 +79,24 @@ export const MonthlyAnalytics: React.FC<MonthlyAnalyticsProps> = ({
   // Get all weeks overlapping this month
   const weeks = getWeeksInMonth(currentYear, currentMonth);
 
+  // Filter tasks to only include eligible past or current tasks for performance statistics
+  const eligibleMonthlyTasks = scheduledTasks.filter((t) => {
+    // Determine target ISO date string from task weekId and dayOfWeek
+    const monday = new Date(t.weekId);
+    if (isNaN(monday.getTime())) return false;
+    const taskDate = new Date(monday);
+    if (t.dayOfWeek !== undefined) {
+      taskDate.setDate(monday.getDate() + t.dayOfWeek);
+    }
+    const isoDate = toISODateString(taskDate);
+    return isAnalyticsEligible(isoDate, t.startTime, t.durationMinutes, 4, now);
+  });
+
+  const futureMonthlyTasksCount = scheduledTasks.length - eligibleMonthlyTasks.length;
+
   // Calculate statistics per week
   const weekDataList = weeks.map((weekInfo, idx) => {
-    const weekTasks = scheduledTasks.filter((t) => t.weekId === weekInfo.weekId);
+    const weekTasks = eligibleMonthlyTasks.filter((t) => t.weekId === weekInfo.weekId);
 
     // Group tasks by category
     const catMinsMap: Record<string, { mins: number; tasks: Task[] }> = {};
@@ -164,6 +181,15 @@ export const MonthlyAnalytics: React.FC<MonthlyAnalyticsProps> = ({
           </div>
         </div>
       </div>
+
+      {futureMonthlyTasksCount > 0 && (
+        <div className="future-items-notice-banner margin-bottom-16">
+          <CalendarIcon className="icon-xs text-blue" />
+          <span>
+            <strong>{futureMonthlyTasksCount} upcoming tasks</strong> are scheduled for future dates/times and are excluded from past productivity calculations.
+          </span>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="analytics-kpi-grid">

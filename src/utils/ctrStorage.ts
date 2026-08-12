@@ -81,6 +81,26 @@ export function incrementCTRValue(ctrId: string, dateStr: string, delta: number 
   return updateCTRValue(ctrId, dateStr, currentVal + delta);
 }
 
+export function updateCTRDefinition(
+  ctrId: string,
+  name: string,
+  colorHex: string
+): CTRItem[] {
+  const ctrs = loadAllCTRs();
+  const updated = ctrs.map((c) => {
+    if (c.id === ctrId) {
+      return {
+        ...c,
+        name: name.trim(),
+        color: colorHex,
+      };
+    }
+    return c;
+  });
+  saveAllCTRs(updated);
+  return updated;
+}
+
 export function deleteCTR(ctrId: string): CTRItem[] {
   const ctrs = loadAllCTRs();
   const updated = ctrs.filter((c) => c.id !== ctrId);

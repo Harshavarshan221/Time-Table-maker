@@ -55,6 +55,7 @@ interface HomePageProps {
   onUpdateCTRValue?: (ctrId: string, dateStr: string, val: number) => void;
   onIncrementCTR?: (ctrId: string, dateStr: string, delta: number) => void;
   onOpenCreateCTRModal?: () => void;
+  onSaveCTRDefinition?: (ctrId: string, name: string, colorHex: string) => void;
   onDeleteCTR?: (ctrId: string) => void;
 }
 
@@ -74,6 +75,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onUpdateCTRValue,
   onIncrementCTR,
   onOpenCreateCTRModal,
+  onSaveCTRDefinition,
   onDeleteCTR,
 }) => {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
@@ -518,6 +520,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           onUpdateValue={onUpdateCTRValue || (() => {})}
           onIncrement={onIncrementCTR || (() => {})}
           onOpenCreateCTRModal={onOpenCreateCTRModal || (() => {})}
+          onSaveCTRDefinition={onSaveCTRDefinition}
           onDeleteCTR={onDeleteCTR || (() => {})}
         />
       </section>
