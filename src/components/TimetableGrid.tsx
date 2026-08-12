@@ -23,6 +23,12 @@ interface TimetableGridProps {
     sourceType: 'UNSCHEDULED_TASK' | 'SCHEDULED_TASK',
     rawTaskData?: Task
   ) => void;
+  onDropClass?: (
+    classId: string,
+    targetIsoDate: string,
+    newStartTime: string,
+    rawClassData?: ClassItem
+  ) => void;
   onEditTask: (task: Task) => void;
   onResizeTask: (taskId: string, newDurationMinutes: number) => void;
   onOpenGridSettings?: () => void;
@@ -42,6 +48,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   hourHeightPx = 64,
   timeFormat = '12h',
   onDropTask,
+  onDropClass,
   onEditTask,
   onResizeTask,
   onOpenGridSettings,
@@ -93,6 +100,11 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
       const payload = JSON.parse(rawPayload);
       if (payload.taskId && (payload.type === 'UNSCHEDULED_TASK' || payload.type === 'SCHEDULED_TASK')) {
         onDropTask(payload.taskId, dayIndex, snappedStart, payload.type, payload.taskData);
+      } else if (payload.classId && payload.type === 'CLASS') {
+        const targetDay = currentWeekInfo.days[dayIndex];
+        if (onDropClass && targetDay) {
+          onDropClass(payload.classId, targetDay.isoDate, snappedStart, payload.classData);
+        }
       }
     } catch (err) {
       console.error('Failed to parse drag & drop data', err);

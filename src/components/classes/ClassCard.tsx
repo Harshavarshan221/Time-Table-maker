@@ -49,10 +49,25 @@ export const ClassCard: React.FC<ClassCardProps> = ({
 
   const statusInfo = getStatusBadge();
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData(
+      'application/json',
+      JSON.stringify({
+        type: 'CLASS',
+        classId: classItem.id,
+        classData: classItem,
+      })
+    );
+  };
+
   return (
     <>
       <div
-        className={`class-card-item ${statusInfo.className}`}
+        className={`class-card-item draggable-class-card ${statusInfo.className}`}
+        draggable={true}
+        onDragStart={handleDragStart}
         style={{
           top: `${topPx}px`,
           height: `${heightPx}px`,
@@ -61,7 +76,7 @@ export const ClassCard: React.FC<ClassCardProps> = ({
           e.stopPropagation();
           setIsPopoverOpen(true);
         }}
-        title={`Click to mark attendance for ${classItem.name} (${classItem.startTime} - ${classItem.endTime})`}
+        title={`Drag to reschedule, or click to mark attendance for ${classItem.name} (${classItem.startTime} - ${classItem.endTime})`}
       >
         <div className="class-card-header-row">
           <span className="class-nano-pill">CLASS</span>

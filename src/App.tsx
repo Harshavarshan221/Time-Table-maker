@@ -59,6 +59,7 @@ import {
   loadAllClasses,
   createClassWithRepeat,
   updateClassStatus,
+  updateClassItem,
   deleteClassItem,
 } from './utils/classStorage';
 import {
@@ -148,6 +149,42 @@ export const App: React.FC = () => {
   const handleDeleteClass = (classId: string) => {
     const updated = deleteClassItem(classId);
     setClasses(updated);
+  };
+
+  const handleDropClass = (
+    classId: string,
+    targetIsoDate: string,
+    newStartTime: string,
+    rawClassData?: ClassItem
+  ) => {
+    const targetClass = classes.find((c) => c.id === classId) || rawClassData;
+    if (!targetClass) return;
+
+    const [sH, sM] = targetClass.startTime.split(':').map(Number);
+    const [eH, eM] = targetClass.endTime.split(':').map(Number);
+    const durationMins = Math.max(15, (eH * 60 + eM) - (sH * 60 + sM));
+
+    const [nH, nM] = newStartTime.split(':').map(Number);
+    const newStartMinsTotal = nH * 60 + nM;
+    const newEndMinsTotal = newStartMinsTotal + durationMins;
+
+    const newEndH = Math.floor(newEndMinsTotal / 60) % 24;
+    const newEndM = newEndMinsTotal % 60;
+
+    const formattedEndH = String(newEndH).padStart(2, '0');
+    const formattedEndM = String(newEndM).padStart(2, '0');
+    const newEndTime = `${formattedEndH}:${formattedEndM}`;
+
+    const updatedClass: ClassItem = {
+      ...targetClass,
+      dateStr: targetIsoDate,
+      startTime: newStartTime,
+      endTime: newEndTime,
+    };
+
+    const updatedClasses = updateClassItem(updatedClass);
+    setClasses(updatedClasses);
+    setToastNotification({ message: `Rescheduled "${targetClass.name}" to ${newStartTime}` });
   };
 
   // CTR Handlers
@@ -924,6 +961,7 @@ export const App: React.FC = () => {
               hourHeightPx={gridSettings.hourHeightPx}
               timeFormat={gridSettings.timeFormat || '12h'}
               onDropTask={handleDropTask}
+              onDropClass={handleDropClass}
               onEditTask={handleOpenEditModal}
               onResizeTask={handleResizeTask}
               onOpenGridSettings={() => setIsGridSettingsModalOpen(true)}
