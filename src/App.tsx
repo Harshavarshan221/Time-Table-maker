@@ -49,6 +49,24 @@ import {
   saveEmotionToFirestore,
   subscribeToDailyEmotions,
 } from './utils/firestoreStorage';
+import { CreateItemPickerModal } from './components/CreateItemPickerModal';
+import { ClassModal } from './components/classes/ClassModal';
+import { CTRModal } from './components/ctrs/CTRModal';
+import type { ClassItem, ClassStatus } from './types/classes';
+import type { CTRItem } from './types/ctrs';
+import {
+  loadAllClasses,
+  createClassWithRepeat,
+  updateClassStatus,
+  deleteClassItem,
+} from './utils/classStorage';
+import {
+  loadAllCTRs,
+  createCTR,
+  updateCTRValue,
+  incrementCTRValue,
+  deleteCTR,
+} from './utils/ctrStorage';
 import { Palette, PanelLeft, History, RotateCcw, X, Bell } from 'lucide-react';
 import { TrashHistoryModal } from './components/TrashHistoryModal';
 import type { DeletedTaskRecord } from './components/TrashHistoryModal';
@@ -99,6 +117,56 @@ export const App: React.FC = () => {
   const [allScheduledTasks, setAllScheduledTasks] = useState<Task[]>([]);
   const [unscheduledTasks, setUnscheduledTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<CategoryConfig[]>([]);
+
+  // Classes & CTRs State
+  const [classes, setClasses] = useState<ClassItem[]>(() => loadAllClasses());
+  const [ctrs, setCtrs] = useState<CTRItem[]>(() => loadAllCTRs());
+
+  // Picker & Item Modals State
+  const [isItemPickerModalOpen, setIsItemPickerModalOpen] = useState(false);
+  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+  const [isCTRModalOpen, setIsCTRModalOpen] = useState(false);
+
+  // Class Handlers
+  const handleCreateClass = (
+    newClass: Omit<ClassItem, 'id'>,
+    weekday?: number,
+    repeatThisMonth?: boolean
+  ) => {
+    const updated = createClassWithRepeat(newClass, weekday, repeatThisMonth);
+    setClasses(updated);
+  };
+
+  const handleUpdateClassStatus = (classId: string, status: ClassStatus) => {
+    const updated = updateClassStatus(classId, status);
+    setClasses(updated);
+  };
+
+  const handleDeleteClass = (classId: string) => {
+    const updated = deleteClassItem(classId);
+    setClasses(updated);
+  };
+
+  // CTR Handlers
+  const handleCreateCTR = (name: string, colorHex: string) => {
+    const updated = createCTR(name, colorHex);
+    setCtrs(updated);
+  };
+
+  const handleUpdateCTRValue = (ctrId: string, dateStr: string, val: number) => {
+    const updated = updateCTRValue(ctrId, dateStr, val);
+    setCtrs(updated);
+  };
+
+  const handleIncrementCTR = (ctrId: string, dateStr: string, delta: number) => {
+    const updated = incrementCTRValue(ctrId, dateStr, delta);
+    setCtrs(updated);
+  };
+
+  const handleDeleteCTR = (ctrId: string) => {
+    const updated = deleteCTR(ctrId);
+    setCtrs(updated);
+  };
 
   // Trash & Delete History state
   const [deletedTasksHistory, setDeletedTasksHistory] = useState<DeletedTaskRecord[]>([]);
@@ -682,8 +750,18 @@ export const App: React.FC = () => {
   };
 
   const handleOpenCreateModal = () => {
-    setTaskToEdit(null);
-    setIsModalOpen(true);
+    setIsItemPickerModalOpen(true);
+  };
+
+  const handleSelectPickerType = (type: 'task' | 'class' | 'ctr') => {
+    if (type === 'task') {
+      setTaskToEdit(null);
+      setIsModalOpen(true);
+    } else if (type === 'class') {
+      setIsClassModalOpen(true);
+    } else if (type === 'ctr') {
+      setIsCTRModalOpen(true);
+    }
   };
 
   const handleOpenEditModal = (task: Task) => {
@@ -693,7 +771,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-container">
-      {/* 1. SINGLE UNIFIED GLOBAL NAVIGATION NAVBAR */}
+      {/* Top Global Navigation Bar across the entire application */}
       <GlobalNavigation
         activeView={activeView}
         onViewChange={setActiveView}
@@ -759,6 +837,7 @@ export const App: React.FC = () => {
           todayTasks={todayTasks}
           allScheduledTasks={allScheduledTasks}
           categories={categories}
+          ctrs={ctrs}
           currentEmotionId={dailyEmotionsMap[toISODateString(selectedDate)] || null}
           onSelectEmotion={handleSelectEmotion}
           onNavigateToGrid={() => setActiveView('grid')}
@@ -766,6 +845,10 @@ export const App: React.FC = () => {
           onOpenCreateTaskModal={handleOpenCreateModal}
           onOpenTrashModal={() => setIsTrashModalOpen(true)}
           onEditTask={handleOpenEditModal}
+          onUpdateCTRValue={handleUpdateCTRValue}
+          onIncrementCTR={handleIncrementCTR}
+          onOpenCreateCTRModal={() => setIsCTRModalOpen(true)}
+          onDeleteCTR={handleDeleteCTR}
         />
       )}
 
@@ -797,6 +880,7 @@ export const App: React.FC = () => {
             <TimetableGrid
               currentWeekInfo={currentWeekInfo}
               scheduledTasks={weekScheduledTasks}
+              classes={classes}
               categories={categories}
               startHour={gridSettings.startHour}
               endHour={gridSettings.endHour}
@@ -806,6 +890,8 @@ export const App: React.FC = () => {
               onEditTask={handleOpenEditModal}
               onResizeTask={handleResizeTask}
               onOpenGridSettings={() => setIsGridSettingsModalOpen(true)}
+              onUpdateClassStatus={handleUpdateClassStatus}
+              onDeleteClass={handleDeleteClass}
             />
           </main>
         </div>
@@ -815,10 +901,34 @@ export const App: React.FC = () => {
         <AnalyticsView
           currentWeekInfo={currentWeekInfo}
           scheduledTasks={allScheduledTasks}
+          classes={classes}
+          ctrs={ctrs}
           categories={categories}
           onDateChange={setSelectedDate}
         />
       )}
+
+      {/* Item Picker Modal (Task vs Class vs CTR) */}
+      <CreateItemPickerModal
+        isOpen={isItemPickerModalOpen}
+        onClose={() => setIsItemPickerModalOpen(false)}
+        onSelectType={handleSelectPickerType}
+      />
+
+      {/* Class Creation Modal */}
+      <ClassModal
+        isOpen={isClassModalOpen}
+        onClose={() => setIsClassModalOpen(false)}
+        selectedDate={selectedDate}
+        onCreateClass={handleCreateClass}
+      />
+
+      {/* CTR Counter Creation Modal */}
+      <CTRModal
+        isOpen={isCTRModalOpen}
+        onClose={() => setIsCTRModalOpen(false)}
+        onCreateCTR={handleCreateCTR}
+      />
 
       {/* Create / Edit Task Modal */}
       <TaskModal

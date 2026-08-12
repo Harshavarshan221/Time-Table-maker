@@ -15,6 +15,7 @@ import {
   Sliders,
 } from 'lucide-react';
 import type { Task, CategoryConfig } from '../types/timetable';
+import type { CTRItem } from '../types/ctrs';
 import { getEmotionConfig, type EmotionId, EMOTIONS } from '../constants/emotions';
 import {
   generateAIMeme,
@@ -27,6 +28,7 @@ import {
 import { type AIPreferences } from '../constants/aiStyleOptions';
 import { EmotionCheckInModal } from './EmotionCheckInModal';
 import { AIStyleSelectorModal } from './home/AIStyleSelectorModal';
+import { CTRWidget } from './ctrs/CTRWidget';
 import { formatTimeRange, formatDurationLabel } from '../utils/dateUtils';
 import {
   attemptRequest,
@@ -42,6 +44,7 @@ interface HomePageProps {
   todayTasks: Task[];
   allScheduledTasks: Task[];
   categories: CategoryConfig[];
+  ctrs?: CTRItem[];
   currentEmotionId: EmotionId | null;
   onSelectEmotion: (emotionId: EmotionId) => void;
   onNavigateToGrid: () => void;
@@ -49,6 +52,10 @@ interface HomePageProps {
   onOpenCreateTaskModal: () => void;
   onOpenTrashModal: () => void;
   onEditTask: (task: Task) => void;
+  onUpdateCTRValue?: (ctrId: string, dateStr: string, val: number) => void;
+  onIncrementCTR?: (ctrId: string, dateStr: string, delta: number) => void;
+  onOpenCreateCTRModal?: () => void;
+  onDeleteCTR?: (ctrId: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -56,6 +63,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   selectedDate,
   todayTasks,
   categories,
+  ctrs = [],
   currentEmotionId,
   onSelectEmotion,
   onNavigateToGrid,
@@ -63,6 +71,10 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenCreateTaskModal,
   onOpenTrashModal,
   onEditTask,
+  onUpdateCTRValue,
+  onIncrementCTR,
+  onOpenCreateCTRModal,
+  onDeleteCTR,
 }) => {
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
@@ -496,6 +508,18 @@ export const HomePage: React.FC<HomePageProps> = ({
             })}
           </div>
         )}
+      </section>
+
+      {/* 4.5 DAILY CTR COUNTER WIDGET SECTION */}
+      <section className="home-section ctr-home-section">
+        <CTRWidget
+          ctrs={ctrs}
+          selectedDateStr={selectedDate.toISOString().split('T')[0]}
+          onUpdateValue={onUpdateCTRValue || (() => {})}
+          onIncrement={onIncrementCTR || (() => {})}
+          onOpenCreateCTRModal={onOpenCreateCTRModal || (() => {})}
+          onDeleteCTR={onDeleteCTR || (() => {})}
+        />
       </section>
 
       {/* 5. QUICK ACTIONS GRID */}

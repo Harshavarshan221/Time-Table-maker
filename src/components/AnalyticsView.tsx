@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import type { Task, WeekInfo, CategoryConfig } from '../types/timetable';
+import type { ClassItem } from '../types/classes';
+import type { CTRItem } from '../types/ctrs';
 import { WeeklyAnalytics } from './WeeklyAnalytics';
 import { MonthlyAnalytics } from './MonthlyAnalytics';
-import { BarChart2, TrendingUp } from 'lucide-react';
+import { ClassAnalyticsView } from './classes/ClassAnalyticsView';
+import { CTRAnalyticsView } from './ctrs/CTRAnalyticsView';
+import { GraduationCap, CheckSquare, Hash, BarChart2, TrendingUp } from 'lucide-react';
 
-export type AnalyticsTab = 'weekly' | 'monthly';
+export type MainAnalyticsCategory = 'classes' | 'tasks' | 'ctrs';
+export type TaskAnalyticsScope = 'weekly' | 'monthly';
 
 interface AnalyticsViewProps {
   currentWeekInfo: WeekInfo;
   scheduledTasks: Task[];
+  classes: ClassItem[];
+  ctrs: CTRItem[];
   categories: CategoryConfig[];
   onDateChange: (newDate: Date) => void;
 }
@@ -16,49 +23,93 @@ interface AnalyticsViewProps {
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   currentWeekInfo,
   scheduledTasks,
+  classes,
+  ctrs,
   categories,
   onDateChange,
 }) => {
-  const [analyticsTab, setAnalyticsTab] = useState<AnalyticsTab>('weekly');
+  const [mainCategory, setMainCategory] = useState<MainAnalyticsCategory>('tasks');
+  const [taskScope, setTaskScope] = useState<TaskAnalyticsScope>('weekly');
 
   return (
     <div className="analytics-view-wrapper">
-      {/* Top Scope Switcher Sub-Header */}
-      <div className="analytics-scope-bar">
-        <div className="scope-tabs-group">
+      {/* 1. TOP-LEVEL 3-TAB ANALYTICS SELECTOR */}
+      <div className="analytics-main-category-bar">
+        <div className="main-category-tabs-group">
           <button
-            className={`scope-tab-btn ${analyticsTab === 'weekly' ? 'active' : ''}`}
-            onClick={() => setAnalyticsTab('weekly')}
+            type="button"
+            className={`main-cat-tab-btn ${mainCategory === 'classes' ? 'active' : ''}`}
+            onClick={() => setMainCategory('classes')}
           >
-            <BarChart2 className="icon-xs" />
-            <span>Weekly Analytics</span>
+            <GraduationCap className="icon-xs text-blue" />
+            <span>CLASSES</span>
           </button>
 
           <button
-            className={`scope-tab-btn ${analyticsTab === 'monthly' ? 'active' : ''}`}
-            onClick={() => setAnalyticsTab('monthly')}
+            type="button"
+            className={`main-cat-tab-btn ${mainCategory === 'tasks' ? 'active' : ''}`}
+            onClick={() => setMainCategory('tasks')}
           >
-            <TrendingUp className="icon-xs" />
-            <span>Monthly Analytics</span>
+            <CheckSquare className="icon-xs text-purple" />
+            <span>TASKS</span>
+          </button>
+
+          <button
+            type="button"
+            className={`main-cat-tab-btn ${mainCategory === 'ctrs' ? 'active' : ''}`}
+            onClick={() => setMainCategory('ctrs')}
+          >
+            <Hash className="icon-xs text-green" />
+            <span>CTRs</span>
           </button>
         </div>
       </div>
 
-      {/* Render selected analytics view */}
-      {analyticsTab === 'weekly' ? (
-        <WeeklyAnalytics
-          currentWeekInfo={currentWeekInfo}
-          scheduledTasks={scheduledTasks}
-          categories={categories}
-          onDateChange={onDateChange}
-        />
+      {/* 2. RENDER SELECTED ANALYTICS SYSTEM */}
+      {mainCategory === 'classes' ? (
+        <ClassAnalyticsView classes={classes} />
+      ) : mainCategory === 'ctrs' ? (
+        <CTRAnalyticsView ctrs={ctrs} />
       ) : (
-        <MonthlyAnalytics
-          scheduledTasks={scheduledTasks}
-          categories={categories}
-        />
+        <div className="task-analytics-wrapper">
+          {/* Sub-Header for Tasks: Weekly vs Monthly */}
+          <div className="analytics-scope-bar margin-bottom-16">
+            <div className="scope-tabs-group">
+              <button
+                type="button"
+                className={`scope-tab-btn ${taskScope === 'weekly' ? 'active' : ''}`}
+                onClick={() => setTaskScope('weekly')}
+              >
+                <BarChart2 className="icon-xs" />
+                <span>Weekly Analytics</span>
+              </button>
+
+              <button
+                type="button"
+                className={`scope-tab-btn ${taskScope === 'monthly' ? 'active' : ''}`}
+                onClick={() => setTaskScope('monthly')}
+              >
+                <TrendingUp className="icon-xs" />
+                <span>Monthly Analytics</span>
+              </button>
+            </div>
+          </div>
+
+          {taskScope === 'weekly' ? (
+            <WeeklyAnalytics
+              currentWeekInfo={currentWeekInfo}
+              scheduledTasks={scheduledTasks}
+              categories={categories}
+              onDateChange={onDateChange}
+            />
+          ) : (
+            <MonthlyAnalytics
+              scheduledTasks={scheduledTasks}
+              categories={categories}
+            />
+          )}
+        </div>
       )}
     </div>
   );
 };
-

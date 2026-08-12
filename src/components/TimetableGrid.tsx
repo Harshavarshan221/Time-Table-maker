@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import type { WeekInfo, Task, CategoryConfig } from '../types/timetable';
+import type { ClassItem, ClassStatus } from '../types/classes';
 import { minutesToFormattedTime, pxToSnappedTime } from '../utils/dateUtils';
 import { TaskCard } from './TaskCard';
+import { ClassCard } from './classes/ClassCard';
 import { Settings } from 'lucide-react';
 
 interface TimetableGridProps {
   currentWeekInfo: WeekInfo;
   scheduledTasks: Task[];
+  classes?: ClassItem[];
   categories: CategoryConfig[];
   startHour?: number;
   endHour?: number;
@@ -22,11 +25,14 @@ interface TimetableGridProps {
   onEditTask: (task: Task) => void;
   onResizeTask: (taskId: string, newDurationMinutes: number) => void;
   onOpenGridSettings?: () => void;
+  onUpdateClassStatus?: (classId: string, status: ClassStatus) => void;
+  onDeleteClass?: (classId: string) => void;
 }
 
 export const TimetableGrid: React.FC<TimetableGridProps> = ({
   currentWeekInfo,
   scheduledTasks,
+  classes = [],
   categories,
   startHour = 4,
   endHour = 28,
@@ -36,6 +42,8 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   onEditTask,
   onResizeTask,
   onOpenGridSettings,
+  onUpdateClassStatus,
+  onDeleteClass,
 }) => {
   // Drag over drop indicator state
   const [dragOverInfo, setDragOverInfo] = useState<{
@@ -141,6 +149,10 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
               (t) => t.dayOfWeek === day.dayIndex
             );
 
+            const dayClasses = classes.filter(
+              (c) => c.dateStr === day.isoDate
+            );
+
             const isHovered = dragOverInfo?.dayIndex === day.dayIndex;
             const dropHighlightTop = isHovered
               ? ( ( ( (parseInt(dragOverInfo.startTime.split(':')[0]) * 60 + parseInt(dragOverInfo.startTime.split(':')[1])) - (startHour * 60) ) / 60) * hourHeightPx )
@@ -189,6 +201,18 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                     hourHeightPx={hourHeightPx}
                     onEditTask={onEditTask}
                     onResizeTask={onResizeTask}
+                  />
+                ))}
+
+                {/* Render Scheduled Lecture Class Cards */}
+                {dayClasses.map((cls) => (
+                  <ClassCard
+                    key={cls.id}
+                    classItem={cls}
+                    startHour={startHour}
+                    hourHeightPx={hourHeightPx}
+                    onUpdateStatus={onUpdateClassStatus || (() => {})}
+                    onDeleteClass={onDeleteClass || (() => {})}
                   />
                 ))}
               </div>
