@@ -886,6 +886,7 @@ export const App: React.FC = () => {
           <main className="timetable-main">
             <TimetableGrid
               currentWeekInfo={currentWeekInfo}
+              selectedDate={selectedDate}
               scheduledTasks={weekScheduledTasks}
               classes={classes}
               categories={categories}

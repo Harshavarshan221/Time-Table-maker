@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import type { WeekInfo, Task, CategoryConfig } from '../types/timetable';
 import type { ClassItem, ClassStatus } from '../types/classes';
-import { minutesToFormattedTime, pxToSnappedTime } from '../utils/dateUtils';
+import { minutesToFormattedTime, pxToSnappedTime, toISODateString } from '../utils/dateUtils';
 import { TaskCard } from './TaskCard';
 import { ClassCard } from './classes/ClassCard';
 import { Settings } from 'lucide-react';
 
 interface TimetableGridProps {
   currentWeekInfo: WeekInfo;
+  selectedDate?: Date;
   scheduledTasks: Task[];
   classes?: ClassItem[];
   categories: CategoryConfig[];
@@ -32,6 +33,7 @@ interface TimetableGridProps {
 
 export const TimetableGrid: React.FC<TimetableGridProps> = ({
   currentWeekInfo,
+  selectedDate,
   scheduledTasks,
   classes = [],
   categories,
@@ -97,6 +99,8 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
     }
   };
 
+  const selectedIsoStr = selectedDate ? toISODateString(selectedDate) : '';
+
   return (
     <div className="timetable-grid-wrapper">
       {/* Header row with Day names */}
@@ -110,21 +114,25 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
           <Settings className="icon-nano time-settings-icon" />
         </div>
         <div className="days-header-cells">
-          {currentWeekInfo.days.map((day) => (
-            <div
-              key={day.isoDate}
-              className={`day-header-cell clickable ${day.isToday ? 'today' : ''}`}
-              onClick={() => {
-                const [y, m, d] = day.isoDate.split('-').map(Number);
-                if (onSelectDate) onSelectDate(new Date(y, m - 1, d));
-              }}
-              title={`Click to select ${day.fullName} (${day.dateStr})`}
-            >
-              <span className="day-name">{day.name}</span>
-              <span className="day-date">{day.dateStr}</span>
-              {day.isToday && <span className="today-dot" title="Today" />}
-            </div>
-          ))}
+          {currentWeekInfo.days.map((day) => {
+            const isSelected = selectedIsoStr === day.isoDate;
+
+            return (
+              <div
+                key={day.isoDate}
+                className={`day-header-cell clickable ${day.isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
+                onClick={() => {
+                  const [y, m, d] = day.isoDate.split('-').map(Number);
+                  if (onSelectDate) onSelectDate(new Date(y, m - 1, d));
+                }}
+                title={`Click to select ${day.fullName} (${day.dateStr})`}
+              >
+                <span className="day-name">{day.name}</span>
+                <span className="day-date">{day.dateStr}</span>
+                {day.isToday && <span className="today-dot" title="Today" />}
+              </div>
+            );
+          })}
         </div>
       </div>
 

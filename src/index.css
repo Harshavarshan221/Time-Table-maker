@@ -722,14 +722,24 @@ body {
   padding: 12px 8px;
   border-right: 1px solid var(--border-light);
   position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
 }
 
-.day-header-cell:last-child {
-  border-right: none;
+.day-header-cell.clickable:hover {
+  background-color: #F1F5F9;
 }
 
-.day-header-cell.today {
-  background-color: var(--primary-light);
+.day-header-cell.selected {
+  background-color: #EFF6FF !important;
+  box-shadow: inset 0 -3px 0 0 var(--primary);
+}
+
+.day-header-cell.selected .day-name,
+.day-header-cell.selected .day-date {
+  color: var(--primary) !important;
+  font-weight: 800 !important;
 }
 
 .day-name {
