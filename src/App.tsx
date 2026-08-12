@@ -899,6 +899,8 @@ export const App: React.FC = () => {
               onOpenGridSettings={() => setIsGridSettingsModalOpen(true)}
               onUpdateClassStatus={handleUpdateClassStatus}
               onDeleteClass={handleDeleteClass}
+              onSelectDate={setSelectedDate}
+              onOpenCreateCTRModal={() => setIsCTRModalOpen(true)}
             />
           </main>
         </div>

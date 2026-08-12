@@ -4,7 +4,7 @@ import type { ClassItem, ClassStatus } from '../types/classes';
 import { minutesToFormattedTime, pxToSnappedTime } from '../utils/dateUtils';
 import { TaskCard } from './TaskCard';
 import { ClassCard } from './classes/ClassCard';
-import { Settings } from 'lucide-react';
+import { Settings, Plus } from 'lucide-react';
 
 interface TimetableGridProps {
   currentWeekInfo: WeekInfo;
@@ -27,6 +27,8 @@ interface TimetableGridProps {
   onOpenGridSettings?: () => void;
   onUpdateClassStatus?: (classId: string, status: ClassStatus) => void;
   onDeleteClass?: (classId: string) => void;
+  onSelectDate?: (date: Date) => void;
+  onOpenCreateCTRModal?: () => void;
 }
 
 export const TimetableGrid: React.FC<TimetableGridProps> = ({
@@ -44,6 +46,8 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   onOpenGridSettings,
   onUpdateClassStatus,
   onDeleteClass,
+  onSelectDate,
+  onOpenCreateCTRModal,
 }) => {
   // Drag over drop indicator state
   const [dragOverInfo, setDragOverInfo] = useState<{
@@ -109,14 +113,25 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
         </div>
         <div className="days-header-cells">
           {currentWeekInfo.days.map((day) => (
-            <div
+            <button
+              type="button"
               key={day.isoDate}
-              className={`day-header-cell ${day.isToday ? 'today' : ''}`}
+              className={`day-header-cell day-header-btn ${day.isToday ? 'today' : ''}`}
+              onClick={() => {
+                const [y, m, d] = day.isoDate.split('-').map(Number);
+                if (onSelectDate) onSelectDate(new Date(y, m - 1, d));
+                if (onOpenCreateCTRModal) onOpenCreateCTRModal();
+              }}
+              title={`Click to select ${day.fullName} (${day.dateStr}) and create/add a CTR`}
             >
               <span className="day-name">{day.name}</span>
               <span className="day-date">{day.dateStr}</span>
+              <span className="add-ctr-nano-badge">
+                <Plus className="icon-nano" />
+                <span>CTR</span>
+              </span>
               {day.isToday && <span className="today-dot" title="Today" />}
-            </div>
+            </button>
           ))}
         </div>
       </div>
