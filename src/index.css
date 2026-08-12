@@ -4318,6 +4318,14 @@ body {
   margin-top: 2px;
 }
 
+.timetable-ctr-widget-box {
+  background-color: #FFFFFF;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
 
 @media (max-width: 768px) {
   .compact-task-item {
