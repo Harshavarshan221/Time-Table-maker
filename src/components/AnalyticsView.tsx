@@ -4,8 +4,6 @@ import type { ClassItem } from '../types/classes';
 import type { CTRItem } from '../types/ctrs';
 import { WeeklyAnalytics } from './WeeklyAnalytics';
 import { MonthlyAnalytics } from './MonthlyAnalytics';
-import { ClassAnalyticsView } from './classes/ClassAnalyticsView';
-import { CTRAnalyticsView } from './ctrs/CTRAnalyticsView';
 import { GraduationCap, CheckSquare, Hash, BarChart2, TrendingUp } from 'lucide-react';
 
 export type MainAnalyticsCategory = 'classes' | 'tasks' | 'ctrs';
@@ -20,6 +18,8 @@ interface AnalyticsViewProps {
   onDateChange: (newDate: Date) => void;
   onNavigateToGrid?: () => void;
   onOpenCreateCTRModal?: () => void;
+  onSaveCTRDefinition?: (ctrId: string, name: string, colorHex: string) => void;
+  onDeleteCTR?: (ctrId: string) => void;
 }
 
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
@@ -29,8 +29,6 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   ctrs,
   categories,
   onDateChange,
-  onNavigateToGrid,
-  onOpenCreateCTRModal,
 }) => {
   const [mainCategory, setMainCategory] = useState<MainAnalyticsCategory>('tasks');
   const [taskScope, setTaskScope] = useState<TaskAnalyticsScope>('weekly');
@@ -70,50 +68,50 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       </div>
 
       {/* 2. RENDER SELECTED ANALYTICS SYSTEM */}
-      {mainCategory === 'classes' ? (
-        <ClassAnalyticsView classes={classes} onNavigateToGrid={onNavigateToGrid} />
-      ) : mainCategory === 'ctrs' ? (
-        <CTRAnalyticsView ctrs={ctrs} onOpenCreateCTRModal={onOpenCreateCTRModal} />
-      ) : (
-        <div className="task-analytics-wrapper">
-          {/* Sub-Header for Tasks: Weekly vs Monthly */}
-          <div className="analytics-scope-bar margin-bottom-16">
-            <div className="scope-tabs-group">
-              <button
-                type="button"
-                className={`scope-tab-btn ${taskScope === 'weekly' ? 'active' : ''}`}
-                onClick={() => setTaskScope('weekly')}
-              >
-                <BarChart2 className="icon-xs" />
-                <span>Weekly Analytics</span>
-              </button>
+      <div className="task-analytics-wrapper">
+        {/* Sub-Header for Tasks: Weekly vs Monthly */}
+        <div className="analytics-scope-bar margin-bottom-16">
+          <div className="scope-tabs-group">
+            <button
+              type="button"
+              className={`scope-tab-btn ${taskScope === 'weekly' ? 'active' : ''}`}
+              onClick={() => setTaskScope('weekly')}
+            >
+              <BarChart2 className="icon-xs" />
+              <span>Weekly Analytics</span>
+            </button>
 
-              <button
-                type="button"
-                className={`scope-tab-btn ${taskScope === 'monthly' ? 'active' : ''}`}
-                onClick={() => setTaskScope('monthly')}
-              >
-                <TrendingUp className="icon-xs" />
-                <span>Monthly Analytics</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className={`scope-tab-btn ${taskScope === 'monthly' ? 'active' : ''}`}
+              onClick={() => setTaskScope('monthly')}
+            >
+              <TrendingUp className="icon-xs" />
+              <span>Monthly Analytics</span>
+            </button>
           </div>
-
-          {taskScope === 'weekly' ? (
-            <WeeklyAnalytics
-              currentWeekInfo={currentWeekInfo}
-              scheduledTasks={scheduledTasks}
-              categories={categories}
-              onDateChange={onDateChange}
-            />
-          ) : (
-            <MonthlyAnalytics
-              scheduledTasks={scheduledTasks}
-              categories={categories}
-            />
-          )}
         </div>
-      )}
+
+        {taskScope === 'weekly' ? (
+          <WeeklyAnalytics
+            currentWeekInfo={currentWeekInfo}
+            scheduledTasks={scheduledTasks}
+            classes={classes}
+            ctrs={ctrs}
+            categories={categories}
+            mode={mainCategory}
+            onDateChange={onDateChange}
+          />
+        ) : (
+          <MonthlyAnalytics
+            scheduledTasks={scheduledTasks}
+            classes={classes}
+            ctrs={ctrs}
+            categories={categories}
+            mode={mainCategory}
+          />
+        )}
+      </div>
     </div>
   );
 };

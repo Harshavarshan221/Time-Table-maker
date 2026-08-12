@@ -52,7 +52,6 @@ import {
 import { CreateItemPickerModal } from './components/CreateItemPickerModal';
 import { ClassModal } from './components/classes/ClassModal';
 import { CTRModal } from './components/ctrs/CTRModal';
-import { CTRWidget } from './components/ctrs/CTRWidget';
 import type { ClassItem, ClassStatus } from './types/classes';
 import type { CTRItem } from './types/ctrs';
 import {
@@ -70,7 +69,7 @@ import {
   updateCTRDefinition,
   deleteCTR,
 } from './utils/ctrStorage';
-import { Palette, PanelLeft, History, RotateCcw, X, Bell, Hash } from 'lucide-react';
+import { Palette, PanelLeft, History, RotateCcw, X, Bell } from 'lucide-react';
 import { TrashHistoryModal } from './components/TrashHistoryModal';
 import type { DeletedTaskRecord } from './components/TrashHistoryModal';
 
@@ -93,7 +92,6 @@ export const App: React.FC = () => {
   // View mode & Sidebar toggle state (Default to Home Page!)
   const [activeView, setActiveView] = useState<AppView>('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [showCTRsOnTimetable, setShowCTRsOnTimetable] = useState(true);
 
   // Daily Emotions state per date (YYYY-MM-DD -> emotionId)
   const [dailyEmotionsMap, setDailyEmotionsMap] = useState<Record<string, EmotionId>>({});
@@ -854,19 +852,6 @@ export const App: React.FC = () => {
 
             <button
               type="button"
-              className={`btn-categories-trigger ${showCTRsOnTimetable ? 'active' : ''}`}
-              onClick={() => setShowCTRsOnTimetable((prev) => !prev)}
-              title="Toggle Daily Counters (CTR) Widget"
-            >
-              <Hash className="icon-xs text-purple" />
-              <span>Daily Counters</span>
-              {ctrs.length > 0 && (
-                <span className="today-tasks-count-badge">{ctrs.length}</span>
-              )}
-            </button>
-
-            <button
-              type="button"
               className="btn-trash-trigger"
               onClick={() => setIsTrashModalOpen(true)}
               title="View Trash History & Restore Tasks"
@@ -895,7 +880,6 @@ export const App: React.FC = () => {
           todayTasks={todayTasks}
           allScheduledTasks={allScheduledTasks}
           categories={categories}
-          ctrs={ctrs}
           currentEmotionId={dailyEmotionsMap[toISODateString(selectedDate)] || null}
           onSelectEmotion={handleSelectEmotion}
           onNavigateToGrid={() => setActiveView('grid')}
@@ -903,11 +887,6 @@ export const App: React.FC = () => {
           onOpenCreateTaskModal={handleOpenCreateModal}
           onOpenTrashModal={() => setIsTrashModalOpen(true)}
           onEditTask={handleOpenEditModal}
-          onUpdateCTRValue={handleUpdateCTRValue}
-          onIncrementCTR={handleIncrementCTR}
-          onOpenCreateCTRModal={() => setIsCTRModalOpen(true)}
-          onSaveCTRDefinition={handleSaveCTRDefinition}
-          onDeleteCTR={handleDeleteCTR}
         />
       )}
 
@@ -936,25 +915,12 @@ export const App: React.FC = () => {
           )}
 
           <main className="timetable-main">
-            {showCTRsOnTimetable && (
-              <div className="timetable-ctr-widget-box margin-bottom-12">
-                <CTRWidget
-                  ctrs={ctrs}
-                  selectedDateStr={toISODateString(selectedDate)}
-                  onUpdateValue={handleUpdateCTRValue}
-                  onIncrement={handleIncrementCTR}
-                  onOpenCreateCTRModal={() => setIsCTRModalOpen(true)}
-                  onSaveCTRDefinition={handleSaveCTRDefinition}
-                  onDeleteCTR={handleDeleteCTR}
-                />
-              </div>
-            )}
-
             <TimetableGrid
               currentWeekInfo={currentWeekInfo}
               selectedDate={selectedDate}
               scheduledTasks={weekScheduledTasks}
               classes={classes}
+              ctrs={ctrs}
               categories={categories}
               startHour={gridSettings.startHour}
               endHour={gridSettings.endHour}
@@ -968,6 +934,9 @@ export const App: React.FC = () => {
               onUpdateClassStatus={handleUpdateClassStatus}
               onDeleteClass={handleDeleteClass}
               onSelectDate={setSelectedDate}
+              onUpdateCTRValue={handleUpdateCTRValue}
+              onIncrementCTR={handleIncrementCTR}
+              onCreateCTR={handleCreateCTR}
             />
           </main>
         </div>
@@ -983,6 +952,8 @@ export const App: React.FC = () => {
           onDateChange={setSelectedDate}
           onNavigateToGrid={() => setActiveView('grid')}
           onOpenCreateCTRModal={() => setIsCTRModalOpen(true)}
+          onSaveCTRDefinition={handleSaveCTRDefinition}
+          onDeleteCTR={handleDeleteCTR}
         />
       )}
 

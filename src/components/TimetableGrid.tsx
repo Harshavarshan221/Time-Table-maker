@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import type { WeekInfo, Task, CategoryConfig } from '../types/timetable';
 import type { ClassItem, ClassStatus } from '../types/classes';
+import type { CTRItem } from '../types/ctrs';
 import { minutesToFormattedTime, pxToSnappedTime, toISODateString } from '../utils/dateUtils';
 import { TaskCard } from './TaskCard';
 import { ClassCard } from './classes/ClassCard';
+import { DateCTRPopover } from './ctrs/DateCTRPopover';
 import { Settings } from 'lucide-react';
 
 interface TimetableGridProps {
@@ -11,6 +13,7 @@ interface TimetableGridProps {
   selectedDate?: Date;
   scheduledTasks: Task[];
   classes?: ClassItem[];
+  ctrs?: CTRItem[];
   categories: CategoryConfig[];
   startHour?: number;
   endHour?: number;
@@ -35,6 +38,9 @@ interface TimetableGridProps {
   onUpdateClassStatus?: (classId: string, status: ClassStatus) => void;
   onDeleteClass?: (classId: string) => void;
   onSelectDate?: (date: Date) => void;
+  onUpdateCTRValue?: (ctrId: string, dateStr: string, val: number) => void;
+  onIncrementCTR?: (ctrId: string, dateStr: string, delta: number) => void;
+  onCreateCTR?: (name: string, colorHex: string) => void;
 }
 
 export const TimetableGrid: React.FC<TimetableGridProps> = ({
@@ -42,6 +48,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   selectedDate,
   scheduledTasks,
   classes = [],
+  ctrs = [],
   categories,
   startHour = 4,
   endHour = 28,
@@ -55,7 +62,11 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   onUpdateClassStatus,
   onDeleteClass,
   onSelectDate,
+  onUpdateCTRValue,
+  onIncrementCTR,
+  onCreateCTR,
 }) => {
+  const [openCTRDateStr, setOpenCTRDateStr] = useState<string | null>(null);
   // Drag over drop indicator state
   const [dragOverInfo, setDragOverInfo] = useState<{
     dayIndex: number;
@@ -136,12 +147,25 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                 onClick={() => {
                   const [y, m, d] = day.isoDate.split('-').map(Number);
                   if (onSelectDate) onSelectDate(new Date(y, m - 1, d));
+                  setOpenCTRDateStr((prev) => (prev === day.isoDate ? null : day.isoDate));
                 }}
-                title={`Click to select ${day.fullName} (${day.dateStr})`}
+                title={`Click to view counters for ${day.fullName} (${day.dateStr})`}
               >
                 <span className="day-name">{day.name}</span>
                 <span className="day-date">{day.dateStr}</span>
                 {day.isToday && <span className="today-dot" title="Today" />}
+
+                {openCTRDateStr === day.isoDate && (
+                  <DateCTRPopover
+                    dateStr={day.isoDate}
+                    dayDisplayStr={day.dateStr}
+                    ctrs={ctrs}
+                    onUpdateValue={onUpdateCTRValue || (() => {})}
+                    onIncrement={onIncrementCTR || (() => {})}
+                    onCreateCTR={onCreateCTR || (() => {})}
+                    onClose={() => setOpenCTRDateStr(null)}
+                  />
+                )}
               </div>
             );
           })}
