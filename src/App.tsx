@@ -914,7 +914,6 @@ export const App: React.FC = () => {
               classes={classes}
               categories={categories}
               onAddTaskClick={handleOpenCreateModal}
-              onAddClassClick={() => setIsClassModalOpen(true)}
               onDeleteTask={handleDeleteTask}
               onEditTask={handleOpenEditModal}
               onDuplicateTask={handleDuplicateTask}

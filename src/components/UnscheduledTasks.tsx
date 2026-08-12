@@ -10,7 +10,6 @@ interface UnscheduledTasksProps {
   classes?: ClassItem[];
   categories: CategoryConfig[];
   onAddTaskClick: () => void;
-  onAddClassClick?: () => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask: (task: Task) => void;
   onDuplicateTask?: (task: Task) => void;
@@ -25,7 +24,6 @@ export const UnscheduledTasks: React.FC<UnscheduledTasksProps> = ({
   classes = [],
   categories,
   onAddTaskClick,
-  onAddClassClick,
   onDeleteTask,
   onEditTask,
   onDuplicateTask,
@@ -182,16 +180,6 @@ export const UnscheduledTasks: React.FC<UnscheduledTasksProps> = ({
           </div>
           <div className="flex-align-center gap-2">
             <span className="section-count-badge bg-blue-badge">{unscheduledClasses.length}</span>
-            {onAddClassClick && (
-              <button
-                type="button"
-                className="btn-add-mini-class"
-                onClick={onAddClassClick}
-                title="Schedule / Add Class"
-              >
-                <Plus className="icon-nano" />
-              </button>
-            )}
           </div>
         </div>
 
