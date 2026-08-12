@@ -900,7 +900,6 @@ export const App: React.FC = () => {
               onUpdateClassStatus={handleUpdateClassStatus}
               onDeleteClass={handleDeleteClass}
               onSelectDate={setSelectedDate}
-              onOpenCreateCTRModal={() => setIsCTRModalOpen(true)}
             />
           </main>
         </div>

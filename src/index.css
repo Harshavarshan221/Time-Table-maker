@@ -4308,49 +4308,6 @@ body {
   margin-top: 2px;
 }
 
-/* Date Header Buttons for CTR Creation */
-.day-header-btn {
-  background: none;
-  border: none;
-  width: 100%;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: all 0.15s ease;
-  padding: 8px 4px;
-}
-
-.day-header-btn:hover {
-  background-color: #F1F5F9;
-}
-
-.add-ctr-nano-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  color: var(--primary);
-  background-color: #EFF6FF;
-  border: 1px solid #BFDBFE;
-  padding: 1px 5px;
-  border-radius: 999px;
-  margin-top: 2px;
-  opacity: 0.85;
-  transition: all 0.15s ease;
-}
-
-.day-header-btn:hover .add-ctr-nano-badge {
-  opacity: 1;
-  transform: scale(1.05);
-  background-color: var(--primary);
-  color: #FFFFFF;
-  border-color: var(--primary);
-}
-
 
 @media (max-width: 768px) {
   .compact-task-item {
